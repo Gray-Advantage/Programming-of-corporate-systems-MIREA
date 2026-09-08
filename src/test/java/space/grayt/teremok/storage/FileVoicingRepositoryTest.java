@@ -108,6 +108,20 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
+    void повторныйВызовНеДублируетПредупреждениеОБитойРоли(@TempDir Path dir) throws Exception {
+        VoicingRepository repository = new FileVoicingRepository(dir);
+        repository.save(draft("sergey"));
+        Path broken = dir.resolve("voicings").resolve("мусор");
+        Files.createDirectories(broken);
+        Files.writeString(broken.resolve("meta.txt"), "совсем не то");
+
+        repository.findByBook("shapochka");
+        repository.findByBook("shapochka");
+
+        assertEquals(1, repository.warnings().size());
+    }
+
+    @Test
     void удалениеУноситПапкуЦеликом(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");

@@ -27,7 +27,9 @@ public final class FileVoicingRepository implements VoicingRepository {
     private static final String AUDIO_SUFFIX = ".wav";
 
     private final Path root;
-    private final List<String> warnings = new ArrayList<>();
+    // LinkedHashSet: одна и та же проблема (битая роль/голос) не должна копиться при повторных
+    // вызовах all() — набор дедуплицирует сообщения, сохраняя порядок появления.
+    private final Set<String> warnings = new LinkedHashSet<>();
 
     public FileVoicingRepository(Path dataDir) {
         this.root = dataDir.resolve("voicings");
