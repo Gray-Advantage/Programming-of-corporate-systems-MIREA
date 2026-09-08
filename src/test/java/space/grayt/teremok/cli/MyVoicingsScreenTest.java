@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,7 +62,8 @@ class MyVoicingsScreenTest {
                 Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
         VotingService voting = new VotingService(repository);
         PlaybackService playback = new PlaybackService(repository);
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player);
+        // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, duration -> Duration.ZERO);
         RecordFlow record = new RecordFlow(console, BOOKS, voicings, player);
         new MyVoicingsScreen(console, BOOKS, voicings, voting, new CastBuilder(voting), playback,
                 playbackConsole, record).run(SERGEY);

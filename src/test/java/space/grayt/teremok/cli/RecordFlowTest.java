@@ -30,11 +30,9 @@ class RecordFlowTest {
     private FakeAudioRecorder recorder;
     private FakeAudioPlayer player;
     private ByteArrayOutputStream out;
-    private Path dataDir;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        dataDir = dir;
         repository = new FileVoicingRepository(dir);
         recorder = new FakeAudioRecorder();
         player = new FakeAudioPlayer();

@@ -59,7 +59,8 @@ class ListenFlowTest {
         VotingService voting = new VotingService(repository);
         PlaybackService playback = new PlaybackService(repository);
         new ListenFlow(console, BOOKS, new CastBuilder(voting), voting, playback,
-                new PlaybackConsole(console, player), player).run(MASHA);
+                // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
+                new PlaybackConsole(console, player, duration -> Duration.ZERO), player).run(MASHA);
     }
 
     private String printed() {

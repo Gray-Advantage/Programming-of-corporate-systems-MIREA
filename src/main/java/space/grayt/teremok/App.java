@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.VoicingService;
@@ -23,6 +25,7 @@ import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.storage.FileProfileRepository;
 import space.grayt.teremok.storage.FileVoicingRepository;
 import space.grayt.teremok.storage.ProfileRepository;
+import space.grayt.teremok.storage.StorageException;
 import space.grayt.teremok.storage.VoicingRepository;
 
 /** Проводка зависимостей и внешний цикл приложения. */
@@ -33,13 +36,24 @@ public final class App {
     private final AudioRecorder recorder;
     private final AudioPlayer player;
     private final Clock clock;
+    private final UnaryOperator<Duration> pauseTransform;
 
     public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock) {
+        this(dataDir, console, recorder, player, clock, UnaryOperator.identity());
+    }
+
+    /**
+     * pauseTransform применяется к паузам чтения неозвученных реплик — только для тестов,
+     * чтобы сюита не спала реальное время; боевой Main остаётся на конструкторе без него.
+     */
+    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
+            UnaryOperator<Duration> pauseTransform) {
         this.dataDir = dataDir;
         this.console = console;
         this.recorder = recorder;
         this.player = player;
         this.clock = clock;
+        this.pauseTransform = pauseTransform;
     }
 
     public void run() {
@@ -59,25 +73,35 @@ public final class App {
         CastBuilder castBuilder = new CastBuilder(voting);
         VoicingService voicingService = new VoicingService(voicings, recorder, clock);
         PlaybackService playback = new PlaybackService(voicings);
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player);
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, pauseTransform);
 
         ProfileScreen profileScreen = new ProfileScreen(console, profiles);
         RecordFlow record = new RecordFlow(console, books, voicingService, player);
         ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole, player);
         MyVoicingsScreen mine = new MyVoicingsScreen(console, books, voicingService, voting, castBuilder,
                 playback, playbackConsole, record);
-        MainMenu menu = new MainMenu(console, listen, record, mine);
+        MainMenu menu = new MainMenu(console, listen, record, mine, voicings);
 
-        while (true) {
-            Optional<Profile> profile = profileScreen.choose();
-            if (profile.isEmpty()) {
-                console.println("До встречи.");
-                return;
+        try {
+            while (true) {
+                Optional<Profile> profile = profileScreen.choose();
+                if (profile.isEmpty()) {
+                    console.println("До встречи.");
+                    return;
+                }
+                if (menu.run(profile.get()) == MainMenu.MenuExit.QUIT) {
+                    console.println("До встречи.");
+                    return;
+                }
             }
-            if (menu.run(profile.get()) == MainMenu.MenuExit.QUIT) {
-                console.println("До встречи.");
-                return;
-            }
+        } catch (StorageException e) {
+            // Сообщения StorageException уже написаны для человека (§8) — печатаем как есть
+            // и завершаем работу штатно, не пробрасывая сырое исключение выше слоя cli.
+            console.println(e.getMessage());
+            console.println("Работа завершена.");
+        } catch (RuntimeException e) {
+            // Последний рубеж: неучтённая ошибка не должна печататься сырым стек-трейсом.
+            console.println("Произошла непредвиденная ошибка. Работа завершена.");
         }
     }
 }

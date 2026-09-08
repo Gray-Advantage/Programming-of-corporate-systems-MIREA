@@ -62,7 +62,7 @@ public final class VoicingService {
         return !book.linesOf(voicing.speakerId()).isEmpty() && missingLines(voicing, book).isEmpty();
     }
 
-    public java.nio.file.Path audioFile(Voicing voicing, int lineNumber) {
+    public Path audioFile(Voicing voicing, int lineNumber) {
         return repository.audioFile(voicing.id(), lineNumber);
     }
 

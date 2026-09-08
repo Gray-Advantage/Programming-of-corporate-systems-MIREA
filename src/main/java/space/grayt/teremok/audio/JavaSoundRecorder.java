@@ -54,6 +54,7 @@ public final class JavaSoundRecorder implements AudioRecorder {
         private final Path target;
         private final Path temp;
         private final Thread writer;
+        private final Thread watchdog;
         private final AtomicBoolean recording = new AtomicBoolean(true);
 
         private Session(TargetDataLine line, Path target) {
@@ -63,7 +64,7 @@ public final class JavaSoundRecorder implements AudioRecorder {
             this.writer = new Thread(this::writeStream, "teremok-recorder");
             writer.setDaemon(true);
             writer.start();
-            startWatchdog();
+            this.watchdog = startWatchdog();
         }
 
         private void writeStream() {
@@ -75,17 +76,23 @@ public final class JavaSoundRecorder implements AudioRecorder {
         }
 
         /** Забытый стоп не должен заливать диск: через MAX_MILLIS останавливаемся сами. */
-        private void startWatchdog() {
-            Thread watchdog = new Thread(() -> {
+        private Thread startWatchdog() {
+            Thread thread = new Thread(() -> {
                 try {
                     Thread.sleep(MAX_MILLIS);
+                    // Сторожевой поток — демон без своей консоли: исключение из stop() (например,
+                    // перенос файла не удался) не должно всплыть наружу сырым стек-трейсом.
                     stop();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                } catch (RuntimeException e) {
+                    // Тихо: пользователь уже не ждёт эту запись, а stop() штатно вызванный позже
+                    // просто ничего не сделает благодаря recording.compareAndSet.
                 }
             }, "teremok-recorder-watchdog");
-            watchdog.setDaemon(true);
-            watchdog.start();
+            thread.setDaemon(true);
+            thread.start();
+            return thread;
         }
 
         @Override
@@ -97,6 +104,10 @@ public final class JavaSoundRecorder implements AudioRecorder {
         public void stop() {
             if (!recording.compareAndSet(true, false)) {
                 return;
+            }
+            // Нормальный стоп будит сторожевой поток раньше срока — ему больше нечего делать.
+            if (Thread.currentThread() != watchdog) {
+                watchdog.interrupt();
             }
             line.stop();
             line.close();

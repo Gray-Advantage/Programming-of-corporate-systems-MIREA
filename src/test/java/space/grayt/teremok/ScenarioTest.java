@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -66,8 +67,11 @@ class ScenarioTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(INPUT.getBytes(UTF_8)), out);
 
+        // Нулевая пауза чтения: сценарий доходит до PlaybackConsole.play и не должен реально
+        // ждать паузы неозвученных реплик.
         new App(dir, console, recorder, player,
-                Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC)).run();
+                Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC),
+                duration -> Duration.ZERO).run();
 
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing mama = repository.find(MAMA).orElseThrow(

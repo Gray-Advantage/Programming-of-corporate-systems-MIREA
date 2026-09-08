@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,12 +71,15 @@ public final class FileVoicingRepository implements VoicingRepository {
 
     @Override
     public void save(Voicing voicing) {
-        AtomicTextFile.writeProperties(root.resolve(voicing.id()).resolve(META), Map.of(
-                "book", voicing.bookId(),
-                "speaker", voicing.speakerId(),
-                "author", voicing.authorId(),
-                "status", voicing.status().name(),
-                "created", voicing.createdAt().toString()));
+        // LinkedHashMap с фиксированным порядком вставки: §6 спецификации задаёт порядок
+        // строк meta.txt, а Map.of() отдавал бы их в случайном порядке от запуска к запуску.
+        Map<String, String> meta = new LinkedHashMap<>();
+        meta.put("book", voicing.bookId());
+        meta.put("speaker", voicing.speakerId());
+        meta.put("author", voicing.authorId());
+        meta.put("status", voicing.status().name());
+        meta.put("created", voicing.createdAt().toString());
+        AtomicTextFile.writeProperties(root.resolve(voicing.id()).resolve(META), meta);
     }
 
     @Override
@@ -116,7 +120,7 @@ public final class FileVoicingRepository implements VoicingRepository {
         Path file = root.resolve(voicingId).resolve(VOTES);
         Map<String, String> all = AtomicTextFile.readProperties(file);
         all.put(profileId, kind.name());
-        AtomicTextFile.writeProperties(file, all);
+        writeVotes(file, all);
     }
 
     @Override
@@ -124,6 +128,19 @@ public final class FileVoicingRepository implements VoicingRepository {
         Path file = root.resolve(voicingId).resolve(VOTES);
         Map<String, String> all = AtomicTextFile.readProperties(file);
         all.remove(profileId);
+        writeVotes(file, all);
+    }
+
+    /** §6: файла votes.txt не должно быть, если голосов нет. */
+    private static void writeVotes(Path file, Map<String, String> all) {
+        if (all.isEmpty()) {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                throw new StorageException("Не удалось удалить пустой файл голосов " + file, e);
+            }
+            return;
+        }
         AtomicTextFile.writeProperties(file, all);
     }
 

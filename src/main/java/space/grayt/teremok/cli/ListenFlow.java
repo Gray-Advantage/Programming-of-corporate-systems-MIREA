@@ -1,5 +1,6 @@
 package space.grayt.teremok.cli;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -150,7 +151,7 @@ public final class ListenFlow {
     }
 
     private void playSample(RatedVoicing target) {
-        Optional<java.nio.file.Path> sample = playback.sample(target.voicing());
+        Optional<Path> sample = playback.sample(target.voicing());
         if (sample.isEmpty()) {
             console.println("У этой озвучки не осталось записанных реплик.");
             return;

@@ -161,4 +161,33 @@ class FileVoicingRepositoryTest {
         assertEquals(List.of(new Vote("masha", VoteKind.LIKE), new Vote("katya", VoteKind.DISLIKE)),
                 repository.votes(voicing.id()));
     }
+
+    /** §6: порядок строк meta.txt фиксирован, а не случаен от запуска к запуску. */
+    @Test
+    void метаФайлПишетсяВФиксированномПорядкеКлючей(@TempDir Path dir) throws Exception {
+        VoicingRepository repository = new FileVoicingRepository(dir);
+        Voicing voicing = draft("sergey");
+
+        repository.save(voicing);
+
+        Path meta = dir.resolve("voicings").resolve(voicing.id()).resolve("meta.txt");
+        List<String> keys = Files.readAllLines(meta).stream().map(line -> line.substring(0, line.indexOf('='))).toList();
+        assertEquals(List.of("book", "speaker", "author", "status", "created"), keys);
+    }
+
+    /** §6: «Файл отсутствует, если голосов нет» — не должно оставаться пустого votes.txt. */
+    @Test
+    void votesTxtУдаляетсяКогдаГолосовНеОстаётся(@TempDir Path dir) {
+        VoicingRepository repository = new FileVoicingRepository(dir);
+        Voicing voicing = draft("sergey");
+        repository.save(voicing);
+        Path votes = dir.resolve("voicings").resolve(voicing.id()).resolve("votes.txt");
+
+        repository.putVote(voicing.id(), "masha", VoteKind.LIKE);
+        assertTrue(Files.exists(votes));
+
+        repository.removeVote(voicing.id(), "masha");
+
+        assertFalse(Files.exists(votes));
+    }
 }
