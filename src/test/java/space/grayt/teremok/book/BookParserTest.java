@@ -92,4 +92,33 @@ class BookParserTest {
 
         assertThrows(BookFormatException.class, () -> BookParser.parse("bad", source));
     }
+
+    @Test
+    void ровно9999репликРазбираютсяУспешно() {
+        StringBuilder source = new StringBuilder();
+        source.append("title: Тест\n");
+        source.append("---\n");
+        for (int i = 1; i <= 9999; i++) {
+            source.append("Персонаж: Реплика ").append(i).append("\n");
+        }
+
+        Book book = BookParser.parse("limit-test", source.toString());
+
+        assertEquals(9999, book.lines().size());
+    }
+
+    @Test
+    void десятьТысячРепликБросаютИсключение() {
+        StringBuilder source = new StringBuilder();
+        source.append("title: Тест\n");
+        source.append("---\n");
+        for (int i = 1; i <= 10000; i++) {
+            source.append("Персонаж: Реплика ").append(i).append("\n");
+        }
+
+        BookFormatException error = assertThrows(BookFormatException.class,
+                () -> BookParser.parse("limit-test", source.toString()));
+
+        assertEquals(10002, error.lineNumber());
+    }
 }
