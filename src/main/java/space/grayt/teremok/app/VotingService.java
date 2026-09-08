@@ -34,6 +34,10 @@ public final class VotingService {
                 .toList();
     }
 
+    public Optional<RatedVoicing> rated(String voicingId) {
+        return repository.find(voicingId).map(this::rate);
+    }
+
     public Optional<VoteKind> voteOf(String voicingId, String voterId) {
         return repository.votes(voicingId).stream()
                 .filter(vote -> vote.profileId().equals(voterId))

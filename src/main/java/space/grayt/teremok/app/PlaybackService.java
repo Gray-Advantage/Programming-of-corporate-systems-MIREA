@@ -3,7 +3,9 @@ package space.grayt.teremok.app;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import space.grayt.teremok.domain.Book;
@@ -44,5 +46,19 @@ public final class PlaybackService {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    /** Пауза, чтобы успеть прочитать неозвученную реплику. */
+    public static Duration readingPause(String text) {
+        long millis = Math.max(1200L, 60L * text.length());
+        return Duration.ofMillis(Math.min(millis, 8000L));
+    }
+
+    /** Первая записанная реплика роли — для кнопки «прослушать пример». */
+    public Optional<Path> sample(Voicing voicing) {
+        return voicing.recordedLines().stream()
+                .min(Comparator.naturalOrder())
+                .map(lineNumber -> repository.audioFile(voicing.id(), lineNumber))
+                .filter(PlaybackService::isPlayable);
     }
 }
