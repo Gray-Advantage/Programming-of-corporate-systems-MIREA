@@ -62,6 +62,17 @@ class ConsoleTest {
     }
 
     @Test
+    void признакЗакрытияВводаВзводитсяТолькоПослеКонцаПотока() {
+        Console console = console("Сергей\n", new ByteArrayOutputStream());
+
+        assertFalse(console.isClosed());
+        console.readLine();
+        assertFalse(console.isClosed());
+        console.readLine();
+        assertTrue(console.isClosed());
+    }
+
+    @Test
     void разбираетНомерПунктаМеню() {
         assertEquals(OptionalInt.of(0), Console.index("1", 3));
         assertEquals(OptionalInt.of(2), Console.index("3", 3));

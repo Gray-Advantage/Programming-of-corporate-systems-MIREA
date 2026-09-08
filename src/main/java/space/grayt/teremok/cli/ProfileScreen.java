@@ -51,6 +51,9 @@ public final class ProfileScreen {
 
     private Optional<Profile> create() {
         String name = console.ask("Имя профиля: ");
+        if (console.isClosed()) {
+            return Optional.empty();
+        }
         try {
             return Optional.of(profiles.create(name));
         } catch (IllegalArgumentException e) {

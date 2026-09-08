@@ -61,6 +61,16 @@ class ProfileScreenTest {
     }
 
     @Test
+    void закрытыйВводНаИмениПрофиляНеСоздаётПрофиль(@TempDir Path dir) {
+        ProfileRepository profiles = new FileProfileRepository(dir);
+
+        Optional<Profile> chosen = screen("n\n", profiles).choose();
+
+        assertTrue(chosen.isEmpty());
+        assertTrue(profiles.findAll().isEmpty());
+    }
+
+    @Test
     void непонятныйВводНеЛомаетЭкран(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
         profiles.create("Сергей");

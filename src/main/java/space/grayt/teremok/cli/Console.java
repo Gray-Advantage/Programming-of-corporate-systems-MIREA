@@ -19,6 +19,7 @@ public final class Console {
 
     private final BufferedReader in;
     private final PrintStream out;
+    private boolean closed;
 
     public Console(InputStream in, OutputStream out) {
         this.in = new BufferedReader(new InputStreamReader(in, UTF_8));
@@ -47,10 +48,20 @@ public final class Console {
     public String readLine() {
         try {
             String line = in.readLine();
-            return line == null ? EXIT : line.trim();
+            if (line == null) {
+                closed = true;
+                return EXIT;
+            }
+            return line.trim();
         } catch (IOException e) {
+            closed = true;
             return EXIT;
         }
+    }
+
+    /** Истинно, если поток ввода уже закрылся — «0» из readLine() в этом случае не настоящий ввод. */
+    public boolean isClosed() {
+        return closed;
     }
 
     public boolean hasPendingInput() {
