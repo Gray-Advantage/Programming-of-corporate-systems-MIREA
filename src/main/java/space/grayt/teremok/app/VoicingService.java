@@ -97,4 +97,8 @@ public final class VoicingService {
     public void delete(Voicing voicing) {
         repository.delete(voicing.id());
     }
+
+    public List<Voicing> byAuthor(String authorId) {
+        return repository.findByAuthor(authorId);
+    }
 }
