@@ -55,6 +55,10 @@ public final class VoicingService {
         return !book.linesOf(voicing.speakerId()).isEmpty() && missingLines(voicing, book).isEmpty();
     }
 
+    public java.nio.file.Path audioFile(Voicing voicing, int lineNumber) {
+        return repository.audioFile(voicing.id(), lineNumber);
+    }
+
     public RecordingSession startRecording(Voicing voicing, int lineNumber) {
         Path target = repository.audioFile(voicing.id(), lineNumber);
         Path dir = target.getParent();
