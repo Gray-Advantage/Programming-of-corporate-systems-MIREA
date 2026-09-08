@@ -41,6 +41,13 @@ public final class VoicingService {
         return repository.find(voicing.id()).orElse(voicing);
     }
 
+    /** Прогресс роли без её создания: для персонажа, которого ещё не начинали, — ноль. */
+    public int recordedCountFor(Book book, String speakerId, String authorId) {
+        return repository.find(Voicing.idOf(book.id(), speakerId, authorId))
+                .map(voicing -> recordedCount(voicing, book))
+                .orElse(0);
+    }
+
     public List<Line> missingLines(Voicing voicing, Book book) {
         return book.linesOf(voicing.speakerId()).stream()
                 .filter(line -> !voicing.isRecorded(line.number()))

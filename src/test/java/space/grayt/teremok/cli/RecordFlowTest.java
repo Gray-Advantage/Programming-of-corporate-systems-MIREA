@@ -70,6 +70,13 @@ class RecordFlowTest {
     }
 
     @Test
+    void просмотрСпискаПерсонажейНеСоздаётЧерновикиНаДиске() {
+        run("1\n0\n");
+
+        assertTrue(repository.findByAuthor("sergey").isEmpty());
+    }
+
+    @Test
     void прослушиваниеПослеЗаписиИспользуетПлеер() {
         run("1\n2\n\n\n1\n3\n0\n0\n");
 

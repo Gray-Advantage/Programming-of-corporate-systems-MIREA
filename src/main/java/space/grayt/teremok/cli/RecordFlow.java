@@ -192,8 +192,7 @@ public final class RecordFlow {
         console.println();
         for (int i = 0; i < speakers.size(); i++) {
             Speaker speaker = speakers.get(i);
-            Voicing voicing = voicings.draftFor(book, speaker.id(), profile.id());
-            int recorded = voicings.recordedCount(voicing, book);
+            int recorded = voicings.recordedCountFor(book, speaker.id(), profile.id());
             int total = book.linesOf(speaker.id()).size();
             String progress = recorded == 0 ? "не начато" : recorded + "/" + total;
             console.println("  " + (i + 1) + "  " + speaker.name() + " — " + total + " реплик, " + progress);
