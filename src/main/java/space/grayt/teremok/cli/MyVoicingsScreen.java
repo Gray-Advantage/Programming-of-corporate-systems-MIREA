@@ -5,7 +5,6 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
-import space.grayt.teremok.app.PlaybackStep;
 import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.book.BookLibrary;
@@ -123,17 +122,10 @@ public final class MyVoicingsScreen {
         }
     }
 
-    /**
-     * Свой персонаж звучит из этой роли даже в черновике, остальные берутся из лучших.
-     * Реплики совсем неозвученных чужих персонажей пропускаются: цель — прослушать свою роль
-     * в контексте озвученных партнёров, а не читать текстом весь остальной черновик книги.
-     */
+    /** Свой персонаж звучит из этой роли даже в черновике, остальные берутся из лучших. */
     private void playRole(Book book, Voicing voicing) {
         Cast cast = castBuilder.best(book).with(voicing.speakerId(), voicing.id());
-        List<PlaybackStep> plan = playback.plan(book, cast).stream()
-                .filter(step -> step.isSpoken() || step.line().speakerId().equals(voicing.speakerId()))
-                .toList();
-        playbackConsole.play(plan);
+        playbackConsole.play(playback.plan(book, cast));
     }
 
     private void togglePublication(Book book, Voicing voicing) {

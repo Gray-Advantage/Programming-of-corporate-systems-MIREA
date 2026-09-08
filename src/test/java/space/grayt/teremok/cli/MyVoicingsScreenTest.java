@@ -123,7 +123,7 @@ class MyVoicingsScreenTest {
     void прослушиваетРольЦеликомДажеЧерновиком() throws Exception {
         completeMama();
 
-        run("1\n2\n0\n0\n");
+        run("1\n2\n");
 
         assertEquals(1, player.played().size());
     }
