@@ -73,11 +73,12 @@ public final class App {
         CastBuilder castBuilder = new CastBuilder(voting);
         VoicingService voicingService = new VoicingService(voicings, recorder, clock);
         PlaybackService playback = new PlaybackService(voicings);
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, pauseTransform);
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, pauseTransform);
 
         ProfileScreen profileScreen = new ProfileScreen(console, profiles);
         RecordFlow record = new RecordFlow(console, books, voicingService, player);
-        ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole, player);
+        ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole, player,
+                profiles);
         MyVoicingsScreen mine = new MyVoicingsScreen(console, books, voicingService, voting, castBuilder,
                 playback, playbackConsole, record);
         MainMenu menu = new MainMenu(console, listen, record, mine, voicings);

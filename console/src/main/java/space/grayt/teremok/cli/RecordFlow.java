@@ -179,7 +179,7 @@ public final class RecordFlow {
         console.println();
         for (int i = 0; i < all.size(); i++) {
             Book book = all.get(i);
-            console.println("  " + (i + 1) + "  " + book.title() + " — " + book.lines().size() + " реплик");
+            console.println("  " + (i + 1) + "  " + book.title() + " — " + Plural.lines(book.lines().size()));
         }
         console.println("  0  Назад");
         return pick(all);
@@ -195,7 +195,7 @@ public final class RecordFlow {
             int recorded = voicings.recordedCountFor(book, speaker.id(), profile.id());
             int total = book.linesOf(speaker.id()).size();
             String progress = recorded == 0 ? "не начато" : recorded + "/" + total;
-            console.println("  " + (i + 1) + "  " + speaker.name() + " — " + total + " реплик, " + progress);
+            console.println("  " + (i + 1) + "  " + speaker.name() + " — " + Plural.lines(total) + ", " + progress);
         }
         console.println("  0  Назад");
         return pick(speakers);

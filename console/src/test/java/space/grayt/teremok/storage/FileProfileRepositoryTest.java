@@ -68,4 +68,17 @@ class FileProfileRepositoryTest {
 
         assertEquals("маша-2_вторая", repository.create("Маша-2_вторая").id());
     }
+
+    @Test
+    void имяПрофиляНаходитсяПоИдентификатору(@TempDir Path dir) {
+        ProfileRepository repository = new FileProfileRepository(dir);
+        repository.create("Сергей");
+
+        assertEquals("Сергей", repository.nameOf("сергей"));
+    }
+
+    @Test
+    void дляНеизвестногоПрофиляИменемСлужитИдентификатор(@TempDir Path dir) {
+        assertEquals("никто", new FileProfileRepository(dir).nameOf("никто"));
+    }
 }

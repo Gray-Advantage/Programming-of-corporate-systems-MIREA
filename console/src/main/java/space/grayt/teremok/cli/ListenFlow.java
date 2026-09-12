@@ -17,6 +17,7 @@ import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.RatedVoicing;
 import space.grayt.teremok.domain.Speaker;
 import space.grayt.teremok.domain.VoteKind;
+import space.grayt.teremok.storage.ProfileRepository;
 
 /** Выбор книги, каста и прослушивание. Голоса ставятся здесь же, в списке вариантов. */
 public final class ListenFlow {
@@ -28,9 +29,11 @@ public final class ListenFlow {
     private final PlaybackService playback;
     private final PlaybackConsole playbackConsole;
     private final AudioPlayer player;
+    private final ProfileRepository profiles;
 
     public ListenFlow(Console console, BookLibrary books, CastBuilder castBuilder, VotingService voting,
-            PlaybackService playback, PlaybackConsole playbackConsole, AudioPlayer player) {
+            PlaybackService playback, PlaybackConsole playbackConsole, AudioPlayer player,
+            ProfileRepository profiles) {
         this.console = console;
         this.books = books;
         this.castBuilder = castBuilder;
@@ -38,6 +41,7 @@ public final class ListenFlow {
         this.playback = playback;
         this.playbackConsole = playbackConsole;
         this.player = player;
+        this.profiles = profiles;
     }
 
     public void run(Profile profile) {
@@ -63,14 +67,14 @@ public final class ListenFlow {
 
     private void showCast(Book book, Cast cast) {
         console.println();
-        console.println(book.title() + " — " + book.lines().size() + " реплик");
+        console.println(book.title() + " — " + Plural.lines(book.lines().size()));
         console.println();
         List<Speaker> speakers = book.speakers();
         for (int i = 0; i < speakers.size(); i++) {
             Speaker speaker = speakers.get(i);
             String voice = cast.voicingFor(speaker.id())
                     .flatMap(voting::rated)
-                    .map(rated -> rated.voicing().authorId() + "  [" + withSign(rated.score()) + "]")
+                    .map(rated -> profiles.nameOf(rated.voicing().authorId()) + "  [" + withSign(rated.score()) + "]")
                     .orElse("— текстом —");
             console.println("  " + (i + 1) + "  " + speaker.name() + "  " + voice);
         }
@@ -92,16 +96,17 @@ public final class ListenFlow {
         while (true) {
             List<RatedVoicing> ranked = voting.ranked(book.id(), speaker.id());
             console.println();
-            console.println(speaker.name() + " — " + book.linesOf(speaker.id()).size() + " реплик");
+            console.println(speaker.name() + " — " + Plural.lines(book.linesOf(speaker.id()).size()));
             console.println();
             for (int i = 0; i < ranked.size(); i++) {
                 RatedVoicing rated = ranked.get(i);
                 String mine = voting.voteOf(rated.voicing().id(), profile.id())
                         .map(kind -> kind == VoteKind.LIKE ? "   ваш голос: +" : "   ваш голос: -")
                         .orElse("");
-                console.println("  " + (i + 1) + "  " + rated.voicing().authorId()
-                        + "  [" + withSign(rated.score()) + "]  лайков " + rated.likes()
-                        + ", дизлайков " + rated.dislikes() + mine);
+                console.println("  " + (i + 1) + "  " + profiles.nameOf(rated.voicing().authorId())
+                        + "  [" + withSign(rated.score()) + "]  "
+                        + Plural.of(rated.likes(), "лайк", "лайка", "лайков") + ", "
+                        + Plural.of(rated.dislikes(), "дизлайк", "дизлайка", "дизлайков") + mine);
             }
             if (ranked.isEmpty()) {
                 console.println("  Опубликованных озвучек пока нет.");

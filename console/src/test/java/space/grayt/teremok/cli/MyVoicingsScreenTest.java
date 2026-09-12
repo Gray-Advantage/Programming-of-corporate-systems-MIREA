@@ -24,7 +24,9 @@ import space.grayt.teremok.book.BookLibrary;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
+import space.grayt.teremok.storage.FileProfileRepository;
 import space.grayt.teremok.storage.FileVoicingRepository;
+import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.storage.VoicingRepository;
 
 class MyVoicingsScreenTest {
@@ -34,6 +36,7 @@ class MyVoicingsScreenTest {
     private static final String MAMA_ID = Voicing.idOf("shapochka", "мама", "sergey");
 
     private VoicingRepository repository;
+    private ProfileRepository profiles;
     private FakeAudioPlayer player;
     private FakeAudioRecorder recorder;
     private ByteArrayOutputStream out;
@@ -41,6 +44,7 @@ class MyVoicingsScreenTest {
     @BeforeEach
     void setUp(@TempDir Path dir) {
         repository = new FileVoicingRepository(dir);
+        profiles = new FileProfileRepository(dir);
         player = new FakeAudioPlayer();
         recorder = new FakeAudioRecorder();
     }
@@ -63,7 +67,7 @@ class MyVoicingsScreenTest {
         VotingService voting = new VotingService(repository);
         PlaybackService playback = new PlaybackService(repository);
         // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, duration -> Duration.ZERO);
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO);
         RecordFlow record = new RecordFlow(console, BOOKS, voicings, player);
         new MyVoicingsScreen(console, BOOKS, voicings, voting, new CastBuilder(voting), playback,
                 playbackConsole, record).run(SERGEY);

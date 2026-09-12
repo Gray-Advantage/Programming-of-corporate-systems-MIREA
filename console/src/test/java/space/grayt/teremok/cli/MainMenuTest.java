@@ -22,7 +22,9 @@ import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
 import space.grayt.teremok.book.BookLibrary;
 import space.grayt.teremok.domain.Profile;
+import space.grayt.teremok.storage.FileProfileRepository;
 import space.grayt.teremok.storage.FileVoicingRepository;
+import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.storage.VoicingRepository;
 
 class MainMenuTest {
@@ -53,14 +55,16 @@ class MainMenuTest {
         BookLibrary books = new BookLibrary();
         FakeAudioPlayer player = new FakeAudioPlayer();
         VoicingRepository repository = new FileVoicingRepository(dir);
+        ProfileRepository profiles = new FileProfileRepository(dir);
         VotingService voting = new VotingService(repository);
         CastBuilder castBuilder = new CastBuilder(voting);
         VoicingService voicings = new VoicingService(repository, new FakeAudioRecorder(),
                 Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
         PlaybackService playback = new PlaybackService(repository);
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, duration -> Duration.ZERO);
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO);
         RecordFlow record = new RecordFlow(console, books, voicings, player);
-        ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole, player);
+        ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole,
+                player, profiles);
         MyVoicingsScreen mine = new MyVoicingsScreen(console, books, voicings, voting, castBuilder,
                 playback, playbackConsole, record);
 

@@ -7,26 +7,30 @@ import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.PlaybackStep;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
+import space.grayt.teremok.storage.ProfileRepository;
 
 /** Проигрывает готовый план: звук там, где он есть, текст с паузой там, где его нет. */
 public final class PlaybackConsole {
 
     private final Console console;
     private final AudioPlayer player;
+    private final ProfileRepository profiles;
     private final UnaryOperator<Duration> pauseTransform;
 
-    public PlaybackConsole(Console console, AudioPlayer player) {
-        this(console, player, UnaryOperator.identity());
+    public PlaybackConsole(Console console, AudioPlayer player, ProfileRepository profiles) {
+        this(console, player, profiles, UnaryOperator.identity());
     }
 
     /**
      * pauseTransform применяется к паузе чтения перед сном — тестам, чтобы не ждать реальное
-     * время, боевому коду не нужен: {@link #PlaybackConsole(Console, AudioPlayer)} передаёт сюда
+     * время, боевому коду не нужен: {@link #PlaybackConsole(Console, AudioPlayer, ProfileRepository)} передаёт сюда
      * тождественное преобразование.
      */
-    public PlaybackConsole(Console console, AudioPlayer player, UnaryOperator<Duration> pauseTransform) {
+    public PlaybackConsole(Console console, AudioPlayer player, ProfileRepository profiles,
+            UnaryOperator<Duration> pauseTransform) {
         this.console = console;
         this.player = player;
+        this.profiles = profiles;
         this.pauseTransform = pauseTransform;
     }
 
@@ -35,7 +39,7 @@ public final class PlaybackConsole {
         console.println("Идёт воспроизведение. Enter — остановить.");
         console.println();
         for (PlaybackStep step : steps) {
-            String voice = step.isSpoken() ? step.authorId() : "текстом";
+            String voice = step.isSpoken() ? profiles.nameOf(step.authorId()) : "текстом";
             console.println("[" + step.speakerName() + " · " + voice + "] " + step.line().text());
             if (!playStep(step)) {
                 console.readLine();

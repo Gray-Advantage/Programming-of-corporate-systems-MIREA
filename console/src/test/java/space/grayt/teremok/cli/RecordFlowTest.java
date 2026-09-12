@@ -120,4 +120,15 @@ class RecordFlowTest {
 
         assertTrue(printed().contains("Все реплики записаны"));
     }
+
+    @Test
+    void числоРепликСклоняется() {
+        run("1\n0\n0\n");
+
+        String printed = printed();
+        assertTrue(printed.contains("Красная Шапочка — 21 реплика"), () -> printed);
+        assertTrue(printed.contains("Колобок — 18 реплик"), () -> printed);
+        assertTrue(printed.contains("Мама — 1 реплика,"), () -> printed);
+        assertTrue(printed.contains("Бабушка — 2 реплики,"), () -> printed);
+    }
 }

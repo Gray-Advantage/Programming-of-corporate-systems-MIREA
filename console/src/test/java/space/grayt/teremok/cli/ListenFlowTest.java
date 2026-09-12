@@ -21,7 +21,9 @@ import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoteKind;
+import space.grayt.teremok.storage.FileProfileRepository;
 import space.grayt.teremok.storage.FileVoicingRepository;
+import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.storage.VoicingRepository;
 
 class ListenFlowTest {
@@ -30,12 +32,14 @@ class ListenFlowTest {
     private static final BookLibrary BOOKS = new BookLibrary();
 
     private VoicingRepository repository;
+    private ProfileRepository profiles;
     private FakeAudioPlayer player;
     private ByteArrayOutputStream out;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
         repository = new FileVoicingRepository(dir);
+        profiles = new FileProfileRepository(dir);
         player = new FakeAudioPlayer();
     }
 
@@ -60,7 +64,8 @@ class ListenFlowTest {
         PlaybackService playback = new PlaybackService(repository);
         new ListenFlow(console, BOOKS, new CastBuilder(voting), voting, playback,
                 // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
-                new PlaybackConsole(console, player, duration -> Duration.ZERO), player).run(MASHA);
+                new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO), player, profiles)
+                .run(MASHA);
     }
 
     private String printed() {
@@ -159,5 +164,32 @@ class ListenFlowTest {
         run("1\nчто-то\n0\n");
 
         assertTrue(printed().contains("Не понимаю"));
+    }
+
+    @Test
+    void авторПоказанИменемПрофиляАНеИдентификатором() throws Exception {
+        profiles.create("Сергей");
+        publishMama("сергей", 0);
+
+        run("1\nn\n2\n0\ns\n");
+
+        String printed = printed();
+        assertTrue(printed.contains("Мама  Сергей"), () -> "в касте нет имени автора:\n" + printed);
+        assertTrue(printed.contains("1  Сергей"), () -> "на экране выбора голоса нет имени:\n" + printed);
+        assertTrue(printed.contains("[Мама · Сергей]"), () -> "при прослушивании нет имени:\n" + printed);
+        assertFalse(printed.contains("сергей"), () -> "на экран просочился идентификатор:\n" + printed);
+    }
+
+    @Test
+    void числаРепликИГолосовСклоняются() throws Exception {
+        publishMama("sergey", 0);
+
+        run("1\nn\n2\nl 1\n0\n0\n");
+
+        String printed = printed();
+        assertTrue(printed.contains("Красная Шапочка — 21 реплика"), () -> printed);
+        assertTrue(printed.contains("Мама — 1 реплика"), () -> printed);
+        assertTrue(printed.contains("0 лайков, 0 дизлайков"), () -> printed);
+        assertTrue(printed.contains("1 лайк, 0 дизлайков"), () -> printed);
     }
 }
