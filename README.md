@@ -19,9 +19,11 @@
 
 ## Быстрый старт
 
-Консольная версия:
+Консольная версия, нужен JDK 21 (на macOS — `brew install openjdk@21`):
 
     cd console
-    ./gradlew run
+    export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
+    ./gradlew -q --console=plain run
 
-Подробности — в [console/README.md](console/README.md).
+Без `JAVA_HOME` не запустится даже `./gradlew`. Подробная инструкция, настройка
+микрофона и описание команд — в [console/README.md](console/README.md).
