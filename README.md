@@ -19,11 +19,19 @@
 
 ## Быстрый старт
 
-Консольная версия, нужен JDK 21 (на macOS — `brew install openjdk@21`):
+Консольная версия, нужен JDK 21.
+
+macOS (`brew install openjdk@21`):
 
     cd console
     export JAVA_HOME="$(brew --prefix openjdk@21)/libexec/openjdk.jdk/Contents/Home"
     ./gradlew -q --console=plain run
 
-Без `JAVA_HOME` не запустится даже `./gradlew`. Подробная инструкция, настройка
-микрофона и описание команд — в [console/README.md](console/README.md).
+Windows, PowerShell (`winget install EclipseAdoptium.Temurin.21.JDK`):
+
+    cd console
+    .\gradlew.bat installDist
+    .\build\install\teremok\bin\teremok.bat
+
+Подробная инструкция для обеих систем, настройка микрофона и описание команд — в
+[console/README.md](console/README.md).

@@ -8,31 +8,52 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.time.Duration;
+import java.util.Map;
 import java.util.OptionalInt;
 
-/** Ввод-вывод консоли в UTF-8. Кодировка задана явно, иначе кириллица ломается на Windows. */
+/**
+ * Ввод-вывод консоли в кодировке терминала. Жёсткий UTF-8 ломал Windows: её консоль по умолчанию
+ * работает в cp866, и кириллица превращалась в кашу в обе стороны. Символы, которых в кодировке
+ * терминала нет, заменяются близкими ASCII, а не вопросительными знаками.
+ */
 public final class Console {
 
     private static final long POLL_MILLIS = 50;
     private static final String EXIT = "0";
+    private static final Map<Integer, String> FALLBACK = Map.of(
+            (int) '—', "-",
+            (int) '–', "-",
+            (int) '«', "\"",
+            (int) '»', "\"",
+            (int) '·', "-",
+            (int) '●', "*",
+            (int) '…', "...");
 
     private final BufferedReader in;
     private final PrintStream out;
+    private final CharsetEncoder encoder;
     private boolean closed;
 
     public Console(InputStream in, OutputStream out) {
-        this.in = new BufferedReader(new InputStreamReader(in, UTF_8));
-        this.out = new PrintStream(out, true, UTF_8);
+        this(in, out, UTF_8);
+    }
+
+    public Console(InputStream in, OutputStream out, Charset charset) {
+        this.in = new BufferedReader(new InputStreamReader(in, charset));
+        this.out = new PrintStream(out, true, charset);
+        this.encoder = charset.newEncoder();
     }
 
     public void print(String text) {
-        out.print(text);
+        out.print(printable(text));
         out.flush();
     }
 
     public void println(String text) {
-        out.println(text);
+        out.println(printable(text));
     }
 
     public void println() {
@@ -87,6 +108,18 @@ public final class Console {
             }
         }
         return !hasPendingInput();
+    }
+
+    private String printable(String text) {
+        if (encoder.canEncode(text)) {
+            return text;
+        }
+        StringBuilder result = new StringBuilder(text.length());
+        text.codePoints().forEach(codePoint -> {
+            String symbol = Character.toString(codePoint);
+            result.append(encoder.canEncode(symbol) ? symbol : FALLBACK.getOrDefault(codePoint, symbol));
+        });
+        return result.toString();
     }
 
     /** Превращает ввод «3» в индекс 2. Пустой результат — ввод не является номером пункта. */

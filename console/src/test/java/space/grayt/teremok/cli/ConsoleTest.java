@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.OptionalInt;
 import org.junit.jupiter.api.Test;
@@ -80,5 +81,43 @@ class ConsoleTest {
         assertEquals(OptionalInt.empty(), Console.index("0", 3));
         assertEquals(OptionalInt.empty(), Console.index("мусор", 3));
         assertEquals(OptionalInt.empty(), Console.index("", 3));
+    }
+
+    private static final Charset CP866 = Charset.forName("IBM866");
+
+    @Test
+    void кириллицаВыводитсяВКодировкеТерминала() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        new Console(new ByteArrayInputStream(new byte[0]), out, CP866).println("Кто вы?");
+
+        assertEquals("Кто вы?", new String(out.toByteArray(), CP866).strip());
+    }
+
+    @Test
+    void вводЧитаетсяВКодировкеТерминала() {
+        byte[] typed = "Сергей\n".getBytes(CP866);
+
+        Console console = new Console(new ByteArrayInputStream(typed), new ByteArrayOutputStream(), CP866);
+
+        assertEquals("Сергей", console.readLine());
+    }
+
+    @Test
+    void символыКоторыхНетВКодировкеТерминалаЗаменяютсяБлизкими() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        new Console(new ByteArrayInputStream(new byte[0]), out, CP866).println("Мама — «привет» ● ·");
+
+        assertEquals("Мама - \"привет\" * ·", new String(out.toByteArray(), CP866).strip());
+    }
+
+    @Test
+    void вUtf8ТипографскиеСимволыОстаютсяКакЕсть() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        console("", out).println("— «» ● ·");
+
+        assertEquals("— «» ● ·", out.toString(UTF_8).strip());
     }
 }
