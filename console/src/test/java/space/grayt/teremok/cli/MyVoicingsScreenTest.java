@@ -11,6 +11,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -21,6 +22,7 @@ import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
 import space.grayt.teremok.book.BookLibrary;
+import space.grayt.teremok.domain.Line;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
@@ -150,5 +152,54 @@ class MyVoicingsScreenTest {
         run("1\n4\nнет\n0\n0\n");
 
         assertTrue(repository.find(MAMA_ID).isPresent());
+    }
+
+    /** Черновик персонажа «Красной Шапочки», у которого записаны первые recorded реплик. */
+    private Voicing draft(String speakerId, int recorded) throws Exception {
+        Voicing voicing = Voicing.newDraft("shapochka", speakerId, "sergey", Instant.parse("2026-09-01T10:00:00Z"));
+        repository.save(voicing);
+        List<Line> lines = BOOKS.find("shapochka").orElseThrow().linesOf(speakerId);
+        for (Line line : lines.subList(0, recorded)) {
+            Path file = repository.audioFile(voicing.id(), line.number());
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, "звук");
+        }
+        return voicing;
+    }
+
+    @Test
+    void опубликоватьВсеПубликуетКаждуюПолностьюЗаписаннуюРоль() throws Exception {
+        Voicing mama = draft("мама", 1);
+        Voicing grandma = draft("бабушка", 2);
+        Voicing hood = draft("шапочка", 1);
+
+        run("a\n0\n");
+
+        assertEquals(VoicingStatus.PUBLISHED, repository.find(mama.id()).orElseThrow().status(), this::printed);
+        assertEquals(VoicingStatus.PUBLISHED, repository.find(grandma.id()).orElseThrow().status(), this::printed);
+        assertEquals(VoicingStatus.DRAFT, repository.find(hood.id()).orElseThrow().status(), this::printed);
+        assertTrue(printed().contains("Опубликовано: 2 роли"), this::printed);
+        assertTrue(printed().contains("Шапочка  черновик  1/7"), this::printed);
+    }
+
+    @Test
+    void пунктОпубликоватьВсеПоказываетЧислоГотовыхЧерновиков() throws Exception {
+        draft("мама", 1);
+        draft("бабушка", 2);
+        repository.save(draft("волк", 6).withStatus(VoicingStatus.PUBLISHED));
+        draft("шапочка", 1);
+
+        run("0\n");
+
+        assertTrue(printed().contains("a  Опубликовать все готовые (2)"), this::printed);
+    }
+
+    @Test
+    void безГотовыхЧерновиковПунктОпубликоватьВсеСкрыт() throws Exception {
+        draft("шапочка", 1);
+
+        run("0\n");
+
+        assertFalse(printed().contains("Опубликовать все"), this::printed);
     }
 }

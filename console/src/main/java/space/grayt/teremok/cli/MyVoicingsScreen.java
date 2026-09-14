@@ -57,11 +57,19 @@ public final class MyVoicingsScreen {
                 console.println("  " + (i + 1) + "  " + describe(mine.get(i)));
             }
             console.println();
+            List<Voicing> ready = readyToPublish(mine);
+            if (!ready.isEmpty()) {
+                console.println("  a  Опубликовать все готовые (" + ready.size() + ")");
+            }
             console.println("  0  Назад");
 
             String command = console.ask("> ");
             if (command.equals("0")) {
                 return;
+            }
+            if (command.equalsIgnoreCase("a")) {
+                publishAll(mine, ready);
+                continue;
             }
             OptionalInt index = Console.index(command, mine.size());
             if (index.isEmpty()) {
@@ -85,6 +93,34 @@ public final class MyVoicingsScreen {
                 .map(rated -> "  [" + (rated.score() > 0 ? "+" + rated.score() : rated.score()) + "]")
                 .orElse("");
         return bookTitle + " · " + speakerName + "  " + status + "  " + progress + rating;
+    }
+
+    /** Черновики, у которых записаны все реплики, — их можно опубликовать разом. */
+    private List<Voicing> readyToPublish(List<Voicing> mine) {
+        return mine.stream()
+                .filter(voicing -> voicing.status() == VoicingStatus.DRAFT)
+                .filter(voicing -> books.find(voicing.bookId())
+                        .map(book -> voicings.isComplete(voicing, book))
+                        .orElse(false))
+                .toList();
+    }
+
+    private void publishAll(List<Voicing> mine, List<Voicing> ready) {
+        if (ready.isEmpty()) {
+            console.println("Нет черновиков, у которых записаны все реплики.");
+            return;
+        }
+        for (Voicing voicing : ready) {
+            voicings.publish(voicing, books.find(voicing.bookId()).orElseThrow());
+        }
+        console.println("Опубликовано: " + Plural.of(ready.size(), "роль", "роли", "ролей") + ".");
+        List<Voicing> unfinished = mine.stream()
+                .filter(voicing -> voicing.status() == VoicingStatus.DRAFT && !ready.contains(voicing))
+                .toList();
+        if (!unfinished.isEmpty()) {
+            console.println("Остались черновиками — записаны не все реплики:");
+            unfinished.forEach(voicing -> console.println("  " + describe(voicing)));
+        }
     }
 
     private void openRole(Voicing voicing) {
