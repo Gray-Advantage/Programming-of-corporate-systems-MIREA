@@ -4,7 +4,7 @@ import java.util.List;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Главное меню. Возвращает управление, когда пользователь выходит или меняет профиль. */
+/** Main menu. Returns when the user quits or switches profile. */
 public final class MainMenu {
 
     public enum MenuExit {
@@ -17,8 +17,8 @@ public final class MainMenu {
     private final RecordFlow record;
     private final MyVoicingsScreen mine;
     private final VoicingRepository voicings;
-    // Сколько предупреждений voicings.warnings() уже показано: список только растёт (см.
-    // FileVoicingRepository), поэтому достаточно печатать хвост после уже показанного количества.
+    // How many voicings.warnings() have been shown already: the list only grows (see
+    // FileVoicingRepository), so printing the tail after that count is enough.
     private int shownWarnings;
 
     public MainMenu(Console console, ListenFlow listen, RecordFlow record, MyVoicingsScreen mine,
@@ -57,7 +57,7 @@ public final class MainMenu {
         }
     }
 
-    /** §8: повреждённые роли и голоса сопровождаются предупреждением, но не на каждом витке меню. */
+    /** Spec §8: damaged voicings and votes come with a warning, but not on every menu loop. */
     private void showNewWarnings() {
         List<String> warnings = voicings.warnings();
         if (shownWarnings >= warnings.size()) {

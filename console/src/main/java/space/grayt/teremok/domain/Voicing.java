@@ -3,7 +3,7 @@ package space.grayt.teremok.domain;
 import java.time.Instant;
 import java.util.Set;
 
-/** Роль: озвучка одного персонажа одним автором. Единица публикации и голосования. */
+/** A voicing: one speaker recorded by one author. The unit of publishing and voting. */
 public record Voicing(String id, String bookId, String speakerId, String authorId,
                       VoicingStatus status, Instant createdAt, Set<Integer> recordedLines) {
 

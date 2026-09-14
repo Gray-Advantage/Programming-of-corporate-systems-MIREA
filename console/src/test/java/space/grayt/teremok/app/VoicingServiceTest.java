@@ -31,7 +31,7 @@ class VoicingServiceTest {
             Шапочка: К бабушке.
             Волк: А где живёт бабушка?
             """);
-    private static final String ВОЛК = Speaker.idOf("Волк");
+    private static final String WOLF = Speaker.idOf("Волк");
     private static final Instant NOW = Instant.parse("2026-09-07T12:00:00Z");
 
     private VoicingRepository repository;
@@ -51,9 +51,9 @@ class VoicingServiceTest {
     }
 
     @Test
-    void черновикСоздаётсяОдинРазИПереиспользуется() {
-        Voicing first = service.draftFor(BOOK, ВОЛК, "sergey");
-        Voicing second = service.draftFor(BOOK, ВОЛК, "sergey");
+    void draftIsCreatedOnceAndReused() {
+        Voicing first = service.draftFor(BOOK, WOLF, "sergey");
+        Voicing second = service.draftFor(BOOK, WOLF, "sergey");
 
         assertEquals(first.id(), second.id());
         assertEquals(VoicingStatus.DRAFT, second.status());
@@ -62,15 +62,15 @@ class VoicingServiceTest {
     }
 
     @Test
-    void незаписанныеРепликиЭтоРепликиПерсонажа() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void missingLinesAreTheSpeakersLines() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
 
         assertEquals(List.of(1, 3), service.missingLines(voicing, BOOK).stream().map(Line::number).toList());
     }
 
     @Test
-    void записьРепликиСоздаётФайлИУменьшаетОстаток() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void recordingLineCreatesFileAndReducesRemaining() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
 
         record(voicing, 1);
         Voicing reloaded = service.reload(voicing);
@@ -81,8 +81,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void рольПолнаяТолькоКогдаЗаписаныВсеЕёРеплики() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void voicingIsCompleteOnlyWhenAllLinesRecorded() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         record(voicing, 1);
 
         assertFalse(service.isComplete(service.reload(voicing), BOOK));
@@ -93,8 +93,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void неполнуюРольОпубликоватьНельзя() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void incompleteVoicingCannotBePublished() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         record(voicing, 1);
 
         IllegalStateException error = assertThrows(IllegalStateException.class,
@@ -104,8 +104,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void полнаяРольПубликуетсяИСнимается() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void completeVoicingIsPublishedAndUnpublished() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         record(voicing, 1);
         record(voicing, 3);
 
@@ -119,8 +119,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void пропавшийФайлДелаетОпубликованнуюРольНеполной() throws Exception {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void missingFileMakesPublishedVoicingIncomplete() throws Exception {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         record(voicing, 1);
         record(voicing, 3);
         service.publish(service.reload(voicing), BOOK);
@@ -131,8 +131,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void удалениеРолиУноситВсеЕёФайлы() {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void deletingVoicingRemovesAllItsFiles() {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         record(voicing, 1);
 
         service.delete(voicing);
@@ -141,8 +141,8 @@ class VoicingServiceTest {
     }
 
     @Test
-    void передЗаписьюУдаляютсяОбрывкиПрошлыхПопыток() throws Exception {
-        Voicing voicing = service.draftFor(BOOK, ВОЛК, "sergey");
+    void staleTempFilesAreRemovedBeforeRecording() throws Exception {
+        Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
         Path dir = repository.audioFile(voicing.id(), 1).getParent();
         Files.createDirectories(dir);
         Files.writeString(dir.resolve("line-0003.wav.tmp"), "обрывок");

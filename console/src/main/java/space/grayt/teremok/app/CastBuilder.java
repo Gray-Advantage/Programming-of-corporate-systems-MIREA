@@ -7,7 +7,7 @@ import space.grayt.teremok.domain.Cast;
 import space.grayt.teremok.domain.RatedVoicing;
 import space.grayt.teremok.domain.Speaker;
 
-/** Собирает каст из лучших опубликованных ролей, чтобы «просто послушать» было в два нажатия. */
+/** Builds a cast from the best published voicings so that just listening takes two keystrokes. */
 public final class CastBuilder {
 
     private final VotingService voting;

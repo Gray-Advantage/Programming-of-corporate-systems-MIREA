@@ -27,8 +27,8 @@ class PlaybackServiceTest {
             Шапочка: К бабушке.
             Волк: А где живёт бабушка?
             """);
-    private static final String ВОЛК = Speaker.idOf("Волк");
-    private static final String ШАПОЧКА = Speaker.idOf("Шапочка");
+    private static final String WOLF = Speaker.idOf("Волк");
+    private static final String HOOD = Speaker.idOf("Шапочка");
 
     private VoicingRepository repository;
     private PlaybackService playback;
@@ -52,9 +52,9 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void озвученныеРепликиИдутАудиоОстальныеТекстом() throws Exception {
-        Voicing волк = withAudio(ВОЛК, "sergey", 1, 3);
-        Cast cast = Cast.empty().with(ВОЛК, волк.id());
+    void voicedLinesPlayAudioOthersAreText() throws Exception {
+        Voicing wolf = withAudio(WOLF, "sergey", 1, 3);
+        Cast cast = Cast.empty().with(WOLF, wolf.id());
 
         List<PlaybackStep> steps = playback.plan(BOOK, cast);
 
@@ -67,8 +67,8 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void порядокРепликСохраняетсяИИменаПерсонажейНаМесте() throws Exception {
-        Cast cast = Cast.empty().with(ВОЛК, withAudio(ВОЛК, "sergey", 1, 3).id());
+    void lineOrderAndSpeakerNamesArePreserved() throws Exception {
+        Cast cast = Cast.empty().with(WOLF, withAudio(WOLF, "sergey", 1, 3).id());
 
         List<PlaybackStep> steps = playback.plan(BOOK, cast);
 
@@ -78,9 +78,9 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void пропавшийФайлЧитаетсяТекстом() throws Exception {
-        Voicing волк = withAudio(ВОЛК, "sergey", 1);
-        Cast cast = Cast.empty().with(ВОЛК, волк.id());
+    void missingFileIsReadAsText() throws Exception {
+        Voicing wolf = withAudio(WOLF, "sergey", 1);
+        Cast cast = Cast.empty().with(WOLF, wolf.id());
 
         List<PlaybackStep> steps = playback.plan(BOOK, cast);
 
@@ -89,17 +89,17 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void пустойФайлСчитаетсяОтсутствующим() throws Exception {
-        Voicing волк = withAudio(ВОЛК, "sergey", 1);
-        Files.writeString(repository.audioFile(волк.id(), 3), "");
-        Cast cast = Cast.empty().with(ВОЛК, волк.id());
+    void emptyFileCountsAsMissing() throws Exception {
+        Voicing wolf = withAudio(WOLF, "sergey", 1);
+        Files.writeString(repository.audioFile(wolf.id(), 3), "");
+        Cast cast = Cast.empty().with(WOLF, wolf.id());
 
         assertFalse(playback.plan(BOOK, cast).get(2).isSpoken());
     }
 
     @Test
-    void ссылкаНаНесуществующуюРольНеЛомаетПлан() {
-        Cast cast = Cast.empty().with(ШАПОЧКА, "нет__такой__роли");
+    void referenceToMissingVoicingDoesNotBreakPlan() {
+        Cast cast = Cast.empty().with(HOOD, "нет__такой__роли");
 
         List<PlaybackStep> steps = playback.plan(BOOK, cast);
 
@@ -108,7 +108,7 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void пустойКастДаётПолностьюТекстовыйПлан() {
+    void emptyCastGivesTextOnlyPlan() {
         List<PlaybackStep> steps = playback.plan(BOOK, Cast.empty());
 
         assertEquals(3, steps.size());

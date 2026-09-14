@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Чтение и запись текстовых файлов хранилища в UTF-8. Запись атомарна. */
+/** Reads and writes storage text files in UTF-8. Writes are atomic. */
 public final class AtomicTextFile {
 
     private static final String TEMP_SUFFIX = ".tmp";
@@ -52,7 +52,7 @@ public final class AtomicTextFile {
         for (String line : readLines(file)) {
             int separator = line.indexOf('=');
             if (separator <= 0) {
-                continue; // Битую строку пропускаем: один испорченный ключ не должен ронять файл.
+                continue; // Skip a malformed line: one broken key must not break the whole file.
             }
             values.put(line.substring(0, separator).trim(), line.substring(separator + 1).trim());
         }

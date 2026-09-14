@@ -1,5 +1,5 @@
 package space.grayt.teremok.domain;
 
-/** Одна реплика книги. Номер сквозной, начинается с 1, и служит именем файла аудио. */
+/** One line of a book. Numbers run through the whole book from 1 and name the audio file. */
 public record Line(int number, String speakerId, String text) {
 }

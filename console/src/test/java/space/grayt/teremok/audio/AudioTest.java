@@ -11,7 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 class AudioTest {
 
     @Test
-    void фейковыйДиктофонПишетФайлПослеОстановки(@TempDir Path dir) throws Exception {
+    void fakeRecorderWritesFileOnStop(@TempDir Path dir) throws Exception {
         FakeAudioRecorder recorder = new FakeAudioRecorder();
         Path target = dir.resolve("line-0001.wav");
 
@@ -25,7 +25,7 @@ class AudioTest {
     }
 
     @Test
-    void повторнаяОстановкаБезопасна(@TempDir Path dir) {
+    void repeatedStopIsSafe(@TempDir Path dir) {
         FakeAudioRecorder recorder = new FakeAudioRecorder();
         RecordingSession session = recorder.start(dir.resolve("line-0001.wav"));
 
@@ -36,7 +36,7 @@ class AudioTest {
     }
 
     @Test
-    void недоступныйДиктофонСообщаетОбЭтом(@TempDir Path dir) {
+    void unavailableRecorderReportsIt(@TempDir Path dir) {
         FakeAudioRecorder recorder = new FakeAudioRecorder();
         recorder.setAvailable(false);
 
@@ -45,7 +45,7 @@ class AudioTest {
     }
 
     @Test
-    void фейковыйПлеерЗапоминаетЧтоИграл(@TempDir Path dir) {
+    void fakePlayerRemembersWhatItPlayed(@TempDir Path dir) {
         FakeAudioPlayer player = new FakeAudioPlayer();
         Path file = dir.resolve("line-0001.wav");
 
@@ -55,7 +55,7 @@ class AudioTest {
     }
 
     @Test
-    void недоступныйПлеерСообщаетОбЭтом(@TempDir Path dir) {
+    void unavailablePlayerReportsIt(@TempDir Path dir) {
         FakeAudioPlayer player = new FakeAudioPlayer();
         player.setAvailable(false);
 
@@ -63,13 +63,13 @@ class AudioTest {
     }
 
     @Test
-    void проверкаДоступностиЖелезаНеБросаетИсключений() {
+    void hardwareAvailabilityCheckDoesNotThrow() {
         assertDoesNotThrow(() -> new JavaSoundRecorder().isAvailable());
         assertDoesNotThrow(() -> new JavaSoundPlayer().isAvailable());
     }
 
     @Test
-    void воспроизведениеОтсутствующегоФайлаДаётПонятнуюОшибку(@TempDir Path dir) {
+    void playingMissingFileGivesClearError(@TempDir Path dir) {
         AudioUnavailableException error = assertThrows(AudioUnavailableException.class,
                 () -> new JavaSoundPlayer().play(dir.resolve("нет.wav")));
 
@@ -77,7 +77,7 @@ class AudioTest {
     }
 
     @Test
-    void форматЗаписиРечевой() {
+    void recordingFormatIsSpeechQuality() {
         assertEquals(16000f, JavaSoundRecorder.FORMAT.getSampleRate());
         assertEquals(16, JavaSoundRecorder.FORMAT.getSampleSizeInBits());
         assertEquals(1, JavaSoundRecorder.FORMAT.getChannels());

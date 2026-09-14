@@ -6,6 +6,6 @@ public interface AudioRecorder {
 
     boolean isAvailable();
 
-    /** Начинает запись в указанный файл. Бросает AudioUnavailableException, если микрофона нет. */
+    /** Starts recording into the given file. Throws AudioUnavailableException when there is no microphone. */
     RecordingSession start(Path target);
 }

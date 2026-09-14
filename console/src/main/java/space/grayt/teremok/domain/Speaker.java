@@ -2,7 +2,7 @@ package space.grayt.teremok.domain;
 
 import java.util.Locale;
 
-/** Персонаж книги. Называется Speaker, потому что Character занят java.lang. */
+/** A book character. Named Speaker because java.lang already has Character. */
 public record Speaker(String id, String name) {
 
     public static String idOf(String name) {

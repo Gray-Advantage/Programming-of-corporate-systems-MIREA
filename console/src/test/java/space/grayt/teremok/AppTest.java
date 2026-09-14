@@ -15,11 +15,11 @@ import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
 import space.grayt.teremok.cli.Console;
 
-/** Отказ диска не должен выходить наружу сырым исключением. */
+/** A disk failure must not escape as a raw exception. */
 class AppTest {
 
     @Test
-    void недоступныйКаталогДанныхОбъясняетсяСловами(@TempDir Path dir) throws Exception {
+    void unavailableDataDirectoryIsExplainedInWords(@TempDir Path dir) throws Exception {
         Path data = dir.resolve("data");
         Files.write(data, List.of("это файл, а не каталог"), UTF_8);
 
@@ -29,11 +29,11 @@ class AppTest {
     }
 
     /**
-     * profiles.txt подменён каталогом: чтение проходит мимо, а запись нового профиля
-     * поднимает StorageException из недр хранилища.
+     * profiles.txt is replaced by a directory: reading skips it, but writing a new profile
+     * raises StorageException from deep inside storage.
      */
     @Test
-    void отказЗаписиНаДискеЗавершаетРаботуСообщением(@TempDir Path dir) throws Exception {
+    void diskWriteFailureEndsWithMessage(@TempDir Path dir) throws Exception {
         Path data = dir.resolve("data");
         Files.createDirectories(data.resolve("profiles.txt"));
         Files.write(data.resolve("profiles.txt").resolve("занято.txt"), List.of("х"), UTF_8);

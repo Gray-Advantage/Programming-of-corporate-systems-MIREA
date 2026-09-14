@@ -46,19 +46,19 @@ class CastBuilderTest {
     }
 
     @Test
-    void каждомуПерсонажуДостаётсяЛучшаяРоль() {
+    void eachSpeakerGetsTheBestVoicing() {
         publish(Speaker.idOf("Волк"), "weak", 1);
-        Voicing лучший = publish(Speaker.idOf("Волк"), "strong", 9);
-        Voicing шапочка = publish(Speaker.idOf("Шапочка"), "masha", 0);
+        Voicing top = publish(Speaker.idOf("Волк"), "strong", 9);
+        Voicing hood = publish(Speaker.idOf("Шапочка"), "masha", 0);
 
         Cast cast = builder.best(BOOK);
 
-        assertEquals(лучший.id(), cast.voicingFor(Speaker.idOf("Волк")).orElseThrow());
-        assertEquals(шапочка.id(), cast.voicingFor(Speaker.idOf("Шапочка")).orElseThrow());
+        assertEquals(top.id(), cast.voicingFor(Speaker.idOf("Волк")).orElseThrow());
+        assertEquals(hood.id(), cast.voicingFor(Speaker.idOf("Шапочка")).orElseThrow());
     }
 
     @Test
-    void персонажБезРолейОстаётсяБезГолоса() {
+    void speakerWithoutVoicingsStaysUnvoiced() {
         publish(Speaker.idOf("Волк"), "sergey", 1);
 
         Cast cast = builder.best(BOOK);
@@ -67,7 +67,7 @@ class CastBuilderTest {
     }
 
     @Test
-    void черновикиВКастНеПопадают() {
+    void draftsAreNotCast() {
         repository.save(Voicing.newDraft("shapochka", Speaker.idOf("Волк"), "sergey",
                 Instant.parse("2026-09-01T10:00:00Z")));
 
@@ -75,7 +75,7 @@ class CastBuilderTest {
     }
 
     @Test
-    void ручнаяЗаменаИСбросГолоса() {
+    void manualReplaceAndResetOfVoice() {
         Cast cast = Cast.empty().with("волк", "shapochka__волк__sergey");
 
         assertEquals("shapochka__волк__sergey", cast.voicingFor("волк").orElseThrow());

@@ -6,7 +6,7 @@ import java.util.OptionalInt;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.storage.ProfileRepository;
 
-/** Выбор профиля при старте и при смене пользователя. */
+/** Profile selection at startup and when switching users. */
 public final class ProfileScreen {
 
     private final Console console;
@@ -17,7 +17,7 @@ public final class ProfileScreen {
         this.profiles = profiles;
     }
 
-    /** Пустой результат означает выход из приложения. */
+    /** An empty result means quitting the app. */
     public Optional<Profile> choose() {
         while (true) {
             List<Profile> all = profiles.findAll();

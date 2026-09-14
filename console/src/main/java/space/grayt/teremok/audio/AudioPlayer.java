@@ -6,6 +6,6 @@ public interface AudioPlayer {
 
     boolean isAvailable();
 
-    /** Проигрывает файл целиком и возвращает управление после окончания. */
+    /** Plays the whole file and returns when it finishes. */
     void play(Path file);
 }

@@ -19,7 +19,7 @@ import space.grayt.teremok.domain.Speaker;
 import space.grayt.teremok.domain.VoteKind;
 import space.grayt.teremok.storage.ProfileRepository;
 
-/** Выбор книги, каста и прослушивание. Голоса ставятся здесь же, в списке вариантов. */
+/** Choosing a book and a cast, and listening. Votes are cast here too, in the list of voicings. */
 public final class ListenFlow {
 
     private final Console console;
@@ -129,7 +129,7 @@ public final class ListenFlow {
         }
     }
 
-    /** Непустой результат означает, что каст выбран и экран пора закрыть. */
+    /** A non-empty result means the cast is chosen and the screen should close. */
     private Optional<Cast> applyCommand(Profile profile, Cast cast, Speaker speaker,
             List<RatedVoicing> ranked, String command) {
         if (command.length() > 2 && command.charAt(1) == ' ') {

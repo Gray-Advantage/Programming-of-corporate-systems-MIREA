@@ -8,7 +8,7 @@ import space.grayt.teremok.domain.Book;
 import space.grayt.teremok.domain.Line;
 import space.grayt.teremok.domain.Speaker;
 
-/** Разбирает текст книги: заголовок, разделитель ---, затем реплики «Имя: текст». */
+/** Parses a book: header, a --- separator, then lines in the form Name: text. */
 public final class BookParser {
 
     private static final String SEPARATOR = "---";

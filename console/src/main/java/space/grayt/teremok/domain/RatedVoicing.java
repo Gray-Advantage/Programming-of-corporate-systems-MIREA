@@ -2,10 +2,10 @@ package space.grayt.teremok.domain;
 
 import java.util.Comparator;
 
-/** Роль с подсчитанными голосами. Рейтинг — разница лайков и дизлайков. */
+/** A voicing with counted votes. The score is likes minus dislikes. */
 public record RatedVoicing(Voicing voicing, int likes, int dislikes) {
 
-    /** Порядок в списке выбора: рейтинг, затем лайки, затем свежесть, затем id для устойчивости. */
+    /** Order in the choice list: score, then likes, then recency, then id for a stable order. */
     public static final Comparator<RatedVoicing> BEST_FIRST =
             Comparator.<RatedVoicing>comparingInt(RatedVoicing::score).reversed()
                     .thenComparing(Comparator.<RatedVoicing>comparingInt(RatedVoicing::likes).reversed())

@@ -10,10 +10,10 @@ public interface ProfileRepository {
 
     Optional<Profile> findById(String id);
 
-    /** Создаёт профиль. Бросает IllegalArgumentException при плохом имени или дубле. */
+    /** Creates a profile. Throws IllegalArgumentException for an invalid or duplicate name. */
     Profile create(String name);
 
-    /** Отображаемое имя профиля, а если такого профиля нет — сам идентификатор. */
+    /** Display name of a profile, or the id itself when there is no such profile. */
     default String nameOf(String id) {
         return findById(id).map(Profile::name).orElse(id);
     }

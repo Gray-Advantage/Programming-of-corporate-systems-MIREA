@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 import space.grayt.teremok.domain.Book;
 
-/** Встроенные книги из ресурсов. Книга, которую не удалось разобрать, пропускается. */
+/** Bundled books loaded from resources. A book that fails to parse is skipped. */
 public final class BookLibrary {
 
     public static final List<String> BOOK_IDS = List.of("shapochka", "teremok", "kolobok");

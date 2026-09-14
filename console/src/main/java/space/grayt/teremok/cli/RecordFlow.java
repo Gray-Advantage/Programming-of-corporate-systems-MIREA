@@ -14,7 +14,7 @@ import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.Speaker;
 import space.grayt.teremok.domain.Voicing;
 
-/** Озвучка персонажа: реплика за репликой, с немедленным сохранением каждой. */
+/** Voicing a speaker line by line, saving each line immediately. */
 public final class RecordFlow {
 
     private final Console console;
@@ -43,7 +43,7 @@ public final class RecordFlow {
         }
     }
 
-    /** Запись конкретной роли. Возвращает управление, когда пользователь вышел. */
+    /** Records a specific voicing. Returns when the user leaves. */
     public void recordRole(Book book, Voicing voicing) {
         Voicing current = voicings.reload(voicing);
         while (true) {
@@ -72,7 +72,7 @@ public final class RecordFlow {
         EXIT
     }
 
-    /** Пустой результат — пользователь вышел из записи. */
+    /** An empty result means the user left recording. */
     private Optional<Voicing> recordLine(Book book, Voicing voicing, Line startLine) {
         Line line = startLine;
         while (true) {
@@ -127,7 +127,7 @@ public final class RecordFlow {
         }
     }
 
-    /** Список всех реплик персонажа с отметками — отсюда перезаписывают уже готовую. */
+    /** All lines of the speaker with marks; this is where an already recorded line gets re-recorded. */
     private Optional<Line> chooseLine(Book book, Voicing voicing) {
         List<Line> all = book.linesOf(voicing.speakerId());
         console.println();
@@ -142,7 +142,7 @@ public final class RecordFlow {
         return pick(all);
     }
 
-    /** false означает, что записать не удалось и нужно выйти из роли. */
+    /** false means recording failed and the voicing screen should close. */
     private boolean record(Voicing voicing, Line line) {
         try {
             RecordingSession session = voicings.startRecording(voicing, line.number());

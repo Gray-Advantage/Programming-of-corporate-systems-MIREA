@@ -22,7 +22,7 @@ application {
     mainClass = "space.grayt.teremok.Main"
 }
 
-// Консольному приложению нужен живой stdin, иначе ./gradlew run бесполезен.
+// A console app needs a live stdin, otherwise ./gradlew run is useless.
 tasks.named<JavaExec>("run") {
     standardInput = System.`in`
 }

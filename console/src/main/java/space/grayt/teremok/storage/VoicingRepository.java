@@ -19,7 +19,7 @@ public interface VoicingRepository {
 
     void delete(String voicingId);
 
-    /** Путь к файлу реплики. Файла может ещё не быть. */
+    /** Path of a line's audio file. The file may not exist yet. */
     Path audioFile(String voicingId, int lineNumber);
 
     List<Vote> votes(String voicingId);
@@ -28,6 +28,6 @@ public interface VoicingRepository {
 
     void removeVote(String voicingId, String profileId);
 
-    /** Сообщения о повреждённых ролях, накопленные при чтении. */
+    /** Messages about damaged voicings collected while reading. */
     List<String> warnings();
 }

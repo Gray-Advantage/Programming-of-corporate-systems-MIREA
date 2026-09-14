@@ -30,12 +30,12 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void идентификаторСобираетсяИзКнигиПерсонажаИАвтора() {
+    void idIsBuiltFromBookSpeakerAndAuthor() {
         assertEquals("shapochka__волк__sergey", Voicing.idOf("shapochka", "волк", "sergey"));
     }
 
     @Test
-    void сохраняетИЧитаетРоль(@TempDir Path dir) {
+    void savesAndReadsVoicing(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
 
@@ -50,7 +50,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void записанныеРепликиВыводятсяИзНепустыхФайлов(@TempDir Path dir) throws Exception {
+    void recordedLinesComeFromNonEmptyFiles(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);
@@ -64,7 +64,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void имяФайлаАудиоСЧетырьмяЗнаками(@TempDir Path dir) {
+    void audioFileNameHasFourDigits(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
 
         assertEquals("line-0007.wav",
@@ -72,7 +72,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void сменаСтатусаСохраняется(@TempDir Path dir) {
+    void statusChangeIsSaved(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);
@@ -83,7 +83,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void ищетПоКнигеИПоАвтору(@TempDir Path dir) {
+    void findsByBookAndByAuthor(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
         repository.save(draft("sergey"));
         repository.save(Voicing.newDraft("shapochka", "бабушка", "masha", CREATED));
@@ -94,7 +94,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void битаяРольПропускаетсяИПопадаетВПредупреждения(@TempDir Path dir) throws Exception {
+    void brokenVoicingIsSkippedAndWarned(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         repository.save(draft("sergey"));
         Path broken = dir.resolve("voicings").resolve("мусор");
@@ -108,7 +108,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void повторныйВызовНеДублируетПредупреждениеОБитойРоли(@TempDir Path dir) throws Exception {
+    void repeatedLookupDoesNotDuplicateBrokenVoicingWarning(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         repository.save(draft("sergey"));
         Path broken = dir.resolve("voicings").resolve("мусор");
@@ -122,7 +122,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void удалениеУноситПапкуЦеликом(@TempDir Path dir) throws Exception {
+    void deleteRemovesWholeDirectory(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);
@@ -135,7 +135,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void голосаСохраняютсяЗаменяютсяИСнимаются(@TempDir Path dir) {
+    void votesAreSavedReplacedAndRemoved(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);
@@ -151,7 +151,7 @@ class FileVoicingRepositoryTest {
     }
 
     @Test
-    void битаяСтрокаГолосаПропускается(@TempDir Path dir) throws Exception {
+    void brokenVoteLineIsSkipped(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);
@@ -162,9 +162,9 @@ class FileVoicingRepositoryTest {
                 repository.votes(voicing.id()));
     }
 
-    /** §6: порядок строк meta.txt фиксирован, а не случаен от запуска к запуску. */
+    /** Spec §6: meta.txt line order is fixed, not random from run to run. */
     @Test
-    void метаФайлПишетсяВФиксированномПорядкеКлючей(@TempDir Path dir) throws Exception {
+    void metaFileKeysAreWrittenInFixedOrder(@TempDir Path dir) throws Exception {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
 
@@ -175,9 +175,9 @@ class FileVoicingRepositoryTest {
         assertEquals(List.of("book", "speaker", "author", "status", "created"), keys);
     }
 
-    /** §6: «Файл отсутствует, если голосов нет» — не должно оставаться пустого votes.txt. */
+    /** Spec §6: the file is absent when there are no votes, so no empty votes.txt may remain. */
     @Test
-    void votesTxtУдаляетсяКогдаГолосовНеОстаётся(@TempDir Path dir) {
+    void votesFileIsDeletedWhenNoVotesRemain(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
         Voicing voicing = draft("sergey");
         repository.save(voicing);

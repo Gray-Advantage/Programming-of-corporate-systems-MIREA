@@ -11,13 +11,13 @@ class BookLibraryTest {
     private final BookLibrary library = new BookLibrary();
 
     @Test
-    void загружаетВсеВстроенныеКниги() {
+    void loadsAllBundledBooks() {
         assertEquals(3, library.all().size());
         assertTrue(library.warnings().isEmpty(), () -> String.join("; ", library.warnings()));
     }
 
     @Test
-    void укаждойКнигиЕстьЗаголовокРепликиИПерсонажи() {
+    void everyBookHasTitleLinesAndSpeakers() {
         for (Book book : library.all()) {
             assertFalse(book.title().isBlank());
             assertFalse(book.lines().isEmpty());
@@ -26,17 +26,17 @@ class BookLibraryTest {
     }
 
     @Test
-    void находитКнигуПоИдентификатору() {
+    void findsBookById() {
         assertEquals("Теремок", library.find("teremok").orElseThrow().title());
     }
 
     @Test
-    void неизвестнаяКнигаНеНаходится() {
+    void unknownBookIsNotFound() {
         assertTrue(library.find("нет-такой").isEmpty());
     }
 
     @Test
-    void номераРепликСквозныеИНачинаютсяСЕдиницы() {
+    void lineNumbersAreSequentialFromOne() {
         Book book = library.find("kolobok").orElseThrow();
 
         assertEquals(1, book.lines().get(0).number());
@@ -44,7 +44,7 @@ class BookLibraryTest {
     }
 
     @Test
-    void идентификаторыКнигУникальны() {
+    void bookIdsAreUnique() {
         List<String> ids = library.all().stream().map(Book::id).toList();
 
         assertEquals(ids.size(), ids.stream().distinct().count());

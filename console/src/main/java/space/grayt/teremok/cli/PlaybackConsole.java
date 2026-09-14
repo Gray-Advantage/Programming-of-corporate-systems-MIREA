@@ -9,7 +9,7 @@ import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
 import space.grayt.teremok.storage.ProfileRepository;
 
-/** Проигрывает готовый план: звук там, где он есть, текст с паузой там, где его нет. */
+/** Plays a ready plan: audio where there is some, text with a pause where there is none. */
 public final class PlaybackConsole {
 
     private final Console console;
@@ -22,9 +22,9 @@ public final class PlaybackConsole {
     }
 
     /**
-     * pauseTransform применяется к паузе чтения перед сном — тестам, чтобы не ждать реальное
-     * время, боевому коду не нужен: {@link #PlaybackConsole(Console, AudioPlayer, ProfileRepository)} передаёт сюда
-     * тождественное преобразование.
+     * pauseTransform is applied to the reading pause before sleeping so that tests do not wait in real
+     * time. Production code does not need it: {@link #PlaybackConsole(Console, AudioPlayer, ProfileRepository)}
+     * passes the identity function.
      */
     public PlaybackConsole(Console console, AudioPlayer player, ProfileRepository profiles,
             UnaryOperator<Duration> pauseTransform) {
@@ -51,7 +51,7 @@ public final class PlaybackConsole {
         console.println("Книга закончилась.");
     }
 
-    /** false означает, что пользователь прервал воспроизведение. */
+    /** false means the user interrupted playback. */
     private boolean playStep(PlaybackStep step) {
         if (!step.isSpoken()) {
             return console.sleepInterruptibly(pauseTransform.apply(PlaybackService.readingPause(step.line().text())));

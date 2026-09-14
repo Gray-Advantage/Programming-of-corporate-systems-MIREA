@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import space.grayt.teremok.domain.Profile;
 
-/** Профили в файле data/profiles.txt строками вида «id=Имя». */
+/** Profiles stored in data/profiles.txt as id=Name lines. */
 public final class FileProfileRepository implements ProfileRepository {
 
     private final Path file;

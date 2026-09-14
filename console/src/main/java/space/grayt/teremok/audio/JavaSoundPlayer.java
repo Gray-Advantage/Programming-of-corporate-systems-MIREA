@@ -11,7 +11,7 @@ import javax.sound.sampled.LineEvent;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-/** Воспроизведение WAV через Clip. Метод play блокирует до конца реплики. */
+/** Plays WAV through a Clip. play blocks until the line ends. */
 public final class JavaSoundPlayer implements AudioPlayer {
 
     @Override

@@ -9,7 +9,7 @@ import space.grayt.teremok.domain.Vote;
 import space.grayt.teremok.domain.VoteKind;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Подсчёт рейтинга и правила голосования. */
+/** Score calculation and voting rules. */
 public final class VotingService {
 
     private final VoicingRepository repository;
@@ -24,7 +24,7 @@ public final class VotingService {
         return new RatedVoicing(voicing, likes, votes.size() - likes);
     }
 
-    /** Опубликованные роли персонажа, лучшие первыми. */
+    /** Published voicings of a speaker, best first. */
     public List<RatedVoicing> ranked(String bookId, String speakerId) {
         return repository.findByBook(bookId).stream()
                 .filter(voicing -> voicing.speakerId().equals(speakerId))

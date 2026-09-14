@@ -21,7 +21,7 @@ class BookParserTest {
             """;
 
     @Test
-    void читаетЗаголовокИРеплики() {
+    void readsTitleAndLines() {
         Book book = BookParser.parse("shapochka", SOURCE);
 
         assertEquals("shapochka", book.id());
@@ -30,7 +30,7 @@ class BookParserTest {
     }
 
     @Test
-    void нумеруетРепликиПодрядИгнорируяПустыеСтроки() {
+    void numbersLinesSequentiallySkippingBlankLines() {
         Book book = BookParser.parse("shapochka", SOURCE);
 
         assertEquals(List.of(1, 2, 3, 4), book.lines().stream().map(Line::number).toList());
@@ -38,7 +38,7 @@ class BookParserTest {
     }
 
     @Test
-    void собираетПерсонажейВПорядкеПоявленияБезДублей() {
+    void collectsSpeakersInOrderOfAppearanceWithoutDuplicates() {
         Book book = BookParser.parse("shapochka", SOURCE);
 
         assertEquals(List.of("Рассказчик", "Волк", "Шапочка"),
@@ -46,21 +46,21 @@ class BookParserTest {
     }
 
     @Test
-    void отдаётРепликиОдногоПерсонажа() {
+    void returnsLinesOfOneSpeaker() {
         Book book = BookParser.parse("shapochka", SOURCE);
 
-        List<Line> волк = book.linesOf(Speaker.idOf("Волк"));
+        List<Line> wolf = book.linesOf(Speaker.idOf("Волк"));
 
-        assertEquals(List.of(2, 4), волк.stream().map(Line::number).toList());
+        assertEquals(List.of(2, 4), wolf.stream().map(Line::number).toList());
     }
 
     @Test
-    void идентификаторПерсонажаБезПробеловИВНижнемРегистре() {
+    void speakerIdIsLowercaseWithoutSpaces() {
         assertEquals("красная-шапочка", Speaker.idOf("Красная Шапочка"));
     }
 
     @Test
-    void отсутствиеЗаголовкаОшибка() {
+    void missingTitleIsAnError() {
         String source = "---\nВолк: Привет.\n";
 
         BookFormatException error = assertThrows(BookFormatException.class,
@@ -70,7 +70,7 @@ class BookParserTest {
     }
 
     @Test
-    void строкаБезДвоеточияОшибкаСНомером() {
+    void lineWithoutColonIsAnErrorWithLineNumber() {
         String source = "title: Тест\n---\nВолк: Привет.\nпросто текст\n";
 
         BookFormatException error = assertThrows(BookFormatException.class,
@@ -80,21 +80,21 @@ class BookParserTest {
     }
 
     @Test
-    void отсутствиеРазделителяОшибка() {
+    void missingSeparatorIsAnError() {
         String source = "title: Тест\nВолк: Привет.\n";
 
         assertThrows(BookFormatException.class, () -> BookParser.parse("bad", source));
     }
 
     @Test
-    void книгаБезРепликОшибка() {
+    void bookWithoutLinesIsAnError() {
         String source = "title: Тест\n---\n";
 
         assertThrows(BookFormatException.class, () -> BookParser.parse("bad", source));
     }
 
     @Test
-    void ровно9999репликРазбираютсяУспешно() {
+    void exactly9999LinesParseSuccessfully() {
         StringBuilder source = new StringBuilder();
         source.append("title: Тест\n");
         source.append("---\n");
@@ -108,7 +108,7 @@ class BookParserTest {
     }
 
     @Test
-    void десятьТысячРепликБросаютИсключение() {
+    void tenThousandLinesThrow() {
         StringBuilder source = new StringBuilder();
         source.append("title: Тест\n");
         source.append("---\n");

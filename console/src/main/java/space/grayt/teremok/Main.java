@@ -18,7 +18,7 @@ public final class Main {
         new App(Path.of("data"), console, new JavaSoundRecorder(), new JavaSoundPlayer(), Clock.systemUTC()).run();
     }
 
-    /** Кодировка терминала, в котором запущено приложение; без терминала (IDE, конвейер) — UTF-8. */
+    /** Charset of the terminal running the app; UTF-8 when there is no terminal (IDE, pipe). */
     private static Charset terminalCharset() {
         java.io.Console terminal = System.console();
         return terminal != null ? terminal.charset() : StandardCharsets.UTF_8;

@@ -29,46 +29,46 @@ class ScenarioTest {
     private static final String MAMA = Voicing.idOf("shapochka", "мама", "sergey");
 
     /**
-     * Полный путь: Сергей записывает и публикует роль, Маша слушает её и ставит лайк.
-     * Каждая строка ввода — один ответ на приглашение экрана.
+     * Full path: Sergey records and publishes a voicing, Masha listens to it and likes it.
+     * Each input line answers one screen prompt.
      */
-    // Имена профилей — латиницей: Profile.of() приводит имя к идентификатору через
-    // toLowerCase(), а MAMA и ожидаемый Vote ниже завязаны на латинские id "sergey"/"masha".
-    // Кириллическое "Сергей" дало бы id "сергей" и роль под другим ключом — тест это поймал.
+    // Profile names are Latin: Profile.of() derives the id from the name via
+    // toLowerCase(), and MAMA and the expected Vote below rely on the Latin ids sergey and masha.
+    // A Cyrillic name would give a Cyrillic id and a voicing under another key; this test caught that.
     private static final String INPUT = String.join("\n",
-            "n", "sergey",  // создать профиль и войти
-            "2",             // Озвучить книгу
-            "1",             // Красная Шапочка
-            "2",             // персонаж Мама, у него одна реплика
-            "",              // Enter — начать запись
-            "",              // Enter — стоп
-            "3",             // дальше: незаписанных реплик не осталось
-            "0",             // закрыть список реплик
-            "0",             // назад из выбора персонажа
-            "3",             // Мои озвучки
-            "1",             // открыть роль
-            "3",             // опубликовать
-            "0",             // назад к списку ролей
-            "0",             // назад в меню
-            "4",             // сменить профиль
-            "n", "masha",   // создать второй профиль
-            "1",             // Слушать книгу
-            "1",             // Красная Шапочка
-            "n",             // сменить голос
-            "2",             // персонаж Мама
-            "l 1",           // лайк единственной озвучке
-            "0",             // назад к касту
-            "s") + "\n";    // слушать; дальше конец ввода закрывает все меню
+            "n", "sergey",  // create a profile and sign in
+            "2",             // Record a book
+            "1",             // Little Red Riding Hood
+            "2",             // speaker Mother, who has one line
+            "",              // Enter starts recording
+            "",              // Enter stops
+            "3",             // next: no unrecorded lines are left
+            "0",             // close the line list
+            "0",             // back from speaker selection
+            "3",             // My voicings
+            "1",             // open the voicing
+            "3",             // publish
+            "0",             // back to the voicing list
+            "0",             // back to the menu
+            "4",             // switch profile
+            "n", "masha",   // create a second profile
+            "1",             // Listen to a book
+            "1",             // Little Red Riding Hood
+            "n",             // change a voice
+            "2",             // speaker Mother
+            "l 1",           // like the only voicing
+            "0",             // back to the cast
+            "s") + "\n";    // listen; then end of input closes all menus
 
     @Test
-    void сквознойСценарийЗаписиПубликацииИЛайка(@TempDir Path dir) throws Exception {
+    void endToEndRecordPublishAndLike(@TempDir Path dir) throws Exception {
         FakeAudioRecorder recorder = new FakeAudioRecorder();
         FakeAudioPlayer player = new FakeAudioPlayer();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(INPUT.getBytes(UTF_8)), out);
 
-        // Нулевая пауза чтения: сценарий доходит до PlaybackConsole.play и не должен реально
-        // ждать паузы неозвученных реплик.
+        // Zero reading pause: the scenario reaches PlaybackConsole.play and must not actually
+        // wait through the pauses of unvoiced lines.
         new App(dir, console, recorder, player,
                 Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC),
                 duration -> Duration.ZERO).run();
@@ -85,7 +85,7 @@ class ScenarioTest {
     }
 
     @Test
-    void выходСразуПослеСтартаГотовитКаталогДанных(@TempDir Path dir) {
+    void quittingRightAfterStartPreparesDataDirectory(@TempDir Path dir) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream("0\n".getBytes(UTF_8)), out);
 

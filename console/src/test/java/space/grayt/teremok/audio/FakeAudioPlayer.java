@@ -4,7 +4,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Плеер для тестов: ничего не играет, только запоминает порядок файлов. */
+/** Test player: plays nothing and only remembers the order of files. */
 public final class FakeAudioPlayer implements AudioPlayer {
 
     private final List<Path> played = new ArrayList<>();

@@ -43,7 +43,7 @@ class ListenFlowTest {
         player = new FakeAudioPlayer();
     }
 
-    /** Публикует роль «Мама» из «Красной Шапочки» с озвученной репликой 2. */
+    /** Publishes the Mother voicing of Little Red Riding Hood with line 2 recorded. */
     private Voicing publishMama(String author, int likes) throws Exception {
         Voicing voicing = Voicing.newDraft("shapochka", "мама", author, Instant.parse("2026-09-01T10:00:00Z"))
                 .withStatus(VoicingStatus.PUBLISHED);
@@ -63,7 +63,7 @@ class ListenFlowTest {
         VotingService voting = new VotingService(repository);
         PlaybackService playback = new PlaybackService(repository);
         new ListenFlow(console, BOOKS, new CastBuilder(voting), voting, playback,
-                // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
+                // Zero reading pause: the test must not actually wait for unvoiced lines.
                 new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO), player, profiles)
                 .run(MASHA);
     }
@@ -73,13 +73,13 @@ class ListenFlowTest {
     }
 
     @Test
-    void паузаЧтенияЗависитОтДлиныНоОграничена() {
+    void readingPauseDependsOnLengthButIsCapped() {
         assertEquals(Duration.ofMillis(1200), PlaybackService.readingPause("Да."));
         assertEquals(Duration.ofMillis(8000), PlaybackService.readingPause("а".repeat(500)));
     }
 
     @Test
-    void кастЗаполняетсяЛучшейРольюАвтоматически() throws Exception {
+    void castIsFilledWithBestVoicingAutomatically() throws Exception {
         publishMama("sergey", 1);
 
         run("1\n0\n");
@@ -88,14 +88,14 @@ class ListenFlowTest {
     }
 
     @Test
-    void персонажБезОзвучкиПоказанКакТекстом() {
+    void speakerWithoutVoicingIsShownAsText() {
         run("1\n0\n");
 
         assertTrue(printed().contains("текстом"));
     }
 
     @Test
-    void воспроизведениеИграетОзвученныеРеплики() throws Exception {
+    void playbackPlaysVoicedLines() throws Exception {
         publishMama("sergey", 1);
 
         run("1\ns\n");
@@ -105,7 +105,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void лайкУчитываетсяВРейтинге() throws Exception {
+    void likeCountsTowardScore() throws Exception {
         Voicing mama = publishMama("sergey", 0);
 
         run("1\nn\n2\nl 1\n0\n0\n");
@@ -115,7 +115,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void повторныйЛайкСнимаетГолос() throws Exception {
+    void repeatedLikeRemovesVote() throws Exception {
         Voicing mama = publishMama("sergey", 0);
 
         run("1\nn\n2\nl 1\nl 1\n0\n0\n");
@@ -124,7 +124,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void заСвоюРольГолосоватьНельзяИЭтоОбъясняется() throws Exception {
+    void votingForOwnVoicingIsRejectedWithExplanation() throws Exception {
         publishMama("masha", 0);
 
         run("1\nn\n2\nl 1\n0\n0\n");
@@ -133,7 +133,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void голосМожноСменитьНаЧтениеТекстом() throws Exception {
+    void voiceCanBeSwitchedToText() throws Exception {
         publishMama("sergey", 1);
 
         run("1\nn\n2\nt\ns\n");
@@ -142,7 +142,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void примерРолиПроигрываетПервуюЗаписаннуюРеплику() throws Exception {
+    void samplePlaysFirstRecordedLine() throws Exception {
         publishMama("sergey", 1);
 
         run("1\nn\n2\np 1\n0\n0\n");
@@ -151,7 +151,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void вводВоВремяВоспроизведенияОстанавливаетЕго() throws Exception {
+    void inputDuringPlaybackStopsIt() throws Exception {
         publishMama("sergey", 1);
 
         run("1\ns\nстоп\n0\n");
@@ -160,14 +160,14 @@ class ListenFlowTest {
     }
 
     @Test
-    void непонятнаяКомандаНеЛомаетЭкран() {
+    void unknownCommandDoesNotBreakScreen() {
         run("1\nчто-то\n0\n");
 
         assertTrue(printed().contains("Не понимаю"));
     }
 
     @Test
-    void авторПоказанИменемПрофиляАНеИдентификатором() throws Exception {
+    void authorIsShownByProfileNameNotId() throws Exception {
         profiles.create("Сергей");
         publishMama("сергей", 0);
 
@@ -181,7 +181,7 @@ class ListenFlowTest {
     }
 
     @Test
-    void числаРепликИГолосовСклоняются() throws Exception {
+    void lineAndVoteCountsUseRussianPlurals() throws Exception {
         publishMama("sergey", 0);
 
         run("1\nn\n2\nl 1\n0\n0\n");

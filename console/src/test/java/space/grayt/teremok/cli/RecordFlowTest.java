@@ -50,9 +50,9 @@ class RecordFlowTest {
         return out.toString(UTF_8);
     }
 
-    /** Книга 1 — «Красная Шапочка», персонаж 2 — «Мама» с единственной репликой. */
+    /** Book 1 is Little Red Riding Hood, speaker 2 is Mother with a single line. */
     @Test
-    void записываетРепликуИСохраняетЧерновик() {
+    void recordsLineAndSavesDraft() {
         run("1\n2\n\n\n3\n0\n0\n");
 
         Voicing voicing = repository.find(Voicing.idOf("shapochka", "мама", "sergey")).orElseThrow();
@@ -61,28 +61,28 @@ class RecordFlowTest {
     }
 
     @Test
-    void прогрессПоказываетсяВСпискеПерсонажей() {
+    void progressIsShownInSpeakerList() {
         run("1\n2\n\n\n3\n0\n1\n0\n0\n");
 
         assertTrue(printed().contains("1/1"));
     }
 
     @Test
-    void просмотрСпискаПерсонажейНеСоздаётЧерновикиНаДиске() {
+    void browsingSpeakersCreatesNoDrafts() {
         run("1\n0\n");
 
         assertTrue(repository.findByAuthor("sergey").isEmpty());
     }
 
     @Test
-    void прослушиваниеПослеЗаписиИспользуетПлеер() {
+    void listeningAfterRecordingUsesPlayer() {
         run("1\n2\n\n\n1\n3\n0\n0\n");
 
         assertEquals(1, player.played().size());
     }
 
     @Test
-    void перезаписьЗаменяетФайлТойЖеРеплики() {
+    void rerecordingReplacesSameLineFile() {
         run("1\n2\n\n\n2\n\n3\n0\n0\n");
 
         assertEquals(2, recorder.recorded().size());
@@ -90,7 +90,7 @@ class RecordFlowTest {
     }
 
     @Test
-    void черезСписокРепликМожноПерезаписатьГотовую() {
+    void recordedLineCanBeRerecordedFromLineList() {
         run("1\n2\n\n\n3\n1\n\n\n3\n0\n0\n");
 
         assertEquals(2, recorder.recorded().size());
@@ -98,7 +98,7 @@ class RecordFlowTest {
     }
 
     @Test
-    void выходНаСерединеОставляетЗаписанноеНаДиске() throws Exception {
+    void quittingMidwayKeepsRecordedLinesOnDisk() throws Exception {
         run("1\n1\n\n\n3\n0\n0\n");
 
         Path file = repository.audioFile(Voicing.idOf("shapochka", "рассказчик", "sergey"), 1);
@@ -106,7 +106,7 @@ class RecordFlowTest {
     }
 
     @Test
-    void недоступныйМикрофонНеЛомаетПоток() {
+    void unavailableMicrophoneDoesNotBreakFlow() {
         recorder.setAvailable(false);
 
         run("1\n2\n\n0\n0\n");
@@ -115,14 +115,14 @@ class RecordFlowTest {
     }
 
     @Test
-    void сообщаетКогдаВсеРепликиУжеЗаписаны() {
+    void reportsWhenAllLinesAreRecorded() {
         run("1\n2\n\n\n3\n0\n2\n0\n0\n");
 
         assertTrue(printed().contains("Все реплики записаны"));
     }
 
     @Test
-    void числоРепликСклоняется() {
+    void lineCountUsesRussianPlurals() {
         run("1\n0\n0\n");
 
         String printed = printed();

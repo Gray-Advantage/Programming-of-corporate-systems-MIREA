@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 class AtomicTextFileTest {
 
     @Test
-    void сохраняетИЧитаетКириллицу(@TempDir Path dir) {
+    void writesAndReadsCyrillic(@TempDir Path dir) {
         Path file = dir.resolve("вложенная/книга.txt");
 
         AtomicTextFile.writeLines(file, List.of("Волк: Куда ты идёшь?", "Шапочка: К бабушке."));
@@ -23,12 +23,12 @@ class AtomicTextFileTest {
     }
 
     @Test
-    void отсутствующийФайлЧитаетсяКакПустой(@TempDir Path dir) {
+    void missingFileReadsAsEmpty(@TempDir Path dir) {
         assertEquals(List.of(), AtomicTextFile.readLines(dir.resolve("нет.txt")));
     }
 
     @Test
-    void послеЗаписиНеОстаётсяВременногоФайла(@TempDir Path dir) throws Exception {
+    void noTempFileRemainsAfterWrite(@TempDir Path dir) throws Exception {
         Path file = dir.resolve("meta.txt");
 
         AtomicTextFile.writeLines(file, List.of("book=shapochka"));
@@ -39,7 +39,7 @@ class AtomicTextFileTest {
     }
 
     @Test
-    void повторнаяЗаписьПолностьюЗаменяетСодержимое(@TempDir Path dir) {
+    void rewriteReplacesContentCompletely(@TempDir Path dir) {
         Path file = dir.resolve("votes.txt");
 
         AtomicTextFile.writeLines(file, List.of("masha=LIKE", "petya=DISLIKE"));
@@ -49,7 +49,7 @@ class AtomicTextFileTest {
     }
 
     @Test
-    void свойстваЧитаютсяПарамиАБитыеСтрокиПропускаются(@TempDir Path dir) {
+    void propertiesAreReadAsPairsAndMalformedLinesSkipped(@TempDir Path dir) {
         Path file = dir.resolve("meta.txt");
         AtomicTextFile.writeLines(file, List.of("book=shapochka", "мусор без равно", "=пустой ключ", "author=sergey"));
 
@@ -59,7 +59,7 @@ class AtomicTextFileTest {
     }
 
     @Test
-    void свойстваПишутсяИЧитаютсяВТомЖеПорядке(@TempDir Path dir) {
+    void propertiesAreWrittenAndReadInSameOrder(@TempDir Path dir) {
         Path file = dir.resolve("meta.txt");
         Map<String, String> values = new LinkedHashMap<>();
         values.put("book", "shapochka");
@@ -71,7 +71,7 @@ class AtomicTextFileTest {
     }
 
     @Test
-    void мусорныеВременныеФайлыУдаляются(@TempDir Path dir) throws Exception {
+    void staleTempFilesAreDeleted(@TempDir Path dir) throws Exception {
         Files.writeString(dir.resolve("line-0001.wav.tmp"), "обрывок");
         Files.writeString(dir.resolve("line-0002.wav"), "целый");
 

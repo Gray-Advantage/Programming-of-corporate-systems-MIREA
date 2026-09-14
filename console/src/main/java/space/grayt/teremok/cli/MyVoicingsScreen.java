@@ -15,7 +15,7 @@ import space.grayt.teremok.domain.Speaker;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 
-/** Список собственных ролей и действия над ними. */
+/** The user's own voicings and actions on them. */
 public final class MyVoicingsScreen {
 
     private final Console console;
@@ -95,7 +95,7 @@ public final class MyVoicingsScreen {
         return bookTitle + " · " + speakerName + "  " + status + "  " + progress + rating;
     }
 
-    /** Черновики, у которых записаны все реплики, — их можно опубликовать разом. */
+    /** Drafts with every line recorded; these can be published all at once. */
     private List<Voicing> readyToPublish(List<Voicing> mine) {
         return mine.stream()
                 .filter(voicing -> voicing.status() == VoicingStatus.DRAFT)
@@ -158,7 +158,7 @@ public final class MyVoicingsScreen {
         }
     }
 
-    /** Свой персонаж звучит из этой роли даже в черновике, остальные берутся из лучших. */
+    /** The user's own speaker plays from this voicing even as a draft; the rest come from the best voicings. */
     private void playRole(Book book, Voicing voicing) {
         Cast cast = castBuilder.best(book).with(voicing.speakerId(), voicing.id());
         playbackConsole.play(playback.plan(book, cast));

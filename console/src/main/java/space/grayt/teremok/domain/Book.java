@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Встроенная книга: заголовок и реплики в порядке чтения. */
+/** A bundled book: title and lines in reading order. */
 public record Book(String id, String title, List<Line> lines, Map<String, Speaker> speakerById) {
 
     public Book {
@@ -14,7 +14,7 @@ public record Book(String id, String title, List<Line> lines, Map<String, Speake
         speakerById = Map.copyOf(speakerById);
     }
 
-    /** Персонажи в порядке первого появления. */
+    /** Speakers in order of first appearance. */
     public List<Speaker> speakers() {
         Map<String, Speaker> ordered = new LinkedHashMap<>();
         for (Line line : lines) {

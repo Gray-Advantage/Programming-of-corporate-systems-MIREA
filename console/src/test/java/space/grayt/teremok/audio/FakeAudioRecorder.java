@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Диктофон для тестов: вместо звука пишет короткую заглушку. */
+/** Test recorder: writes a short placeholder instead of sound. */
 public final class FakeAudioRecorder implements AudioRecorder {
 
     private final List<Path> recorded = new ArrayList<>();

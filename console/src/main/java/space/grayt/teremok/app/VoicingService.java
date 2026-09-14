@@ -15,7 +15,7 @@ import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.storage.AtomicTextFile;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Жизненный цикл роли: черновик, запись реплик, публикация, удаление. */
+/** Voicing lifecycle: draft, recording lines, publishing, deleting. */
 public final class VoicingService {
 
     private final VoicingRepository repository;
@@ -41,7 +41,7 @@ public final class VoicingService {
         return repository.find(voicing.id()).orElse(voicing);
     }
 
-    /** Прогресс роли без её создания: для персонажа, которого ещё не начинали, — ноль. */
+    /** Voicing progress without creating the voicing: zero for a speaker nobody has started. */
     public int recordedCountFor(Book book, String speakerId, String authorId) {
         return repository.find(Voicing.idOf(book.id(), speakerId, authorId))
                 .map(voicing -> recordedCount(voicing, book))

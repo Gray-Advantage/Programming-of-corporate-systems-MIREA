@@ -1,9 +1,9 @@
 package space.grayt.teremok.cli;
 
 /**
- * Число с существительным в нужной форме: 1 реплика, 2 реплики, 5 реплик.
- * В JDK нет публичного API правил множественного числа, а ICU4J нарушил бы требование
- * «ноль зависимостей в рантайме», поэтому здесь записано правило CLDR для русских целых чисел.
+ * A count with a noun in the correct Russian plural form: one, few or many, as for 1, 2 and 5.
+ * The JDK has no public plural rules API and ICU4J would break the zero runtime dependencies
+ * requirement, so the CLDR rule for Russian integers is written out here.
  */
 final class Plural {
 

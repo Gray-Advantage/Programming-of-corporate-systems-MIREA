@@ -1,6 +1,6 @@
 package space.grayt.teremok.book;
 
-/** Ошибка разбора книги. Номер строки — как в исходном файле, начиная с 1. */
+/** Book parsing error. The line number refers to the source file, starting at 1. */
 public class BookFormatException extends RuntimeException {
 
     private final int lineNumber;

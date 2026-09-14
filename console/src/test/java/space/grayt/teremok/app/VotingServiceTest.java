@@ -46,7 +46,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void рейтингЭтоРазницаЛайковИДизлайков() {
+    void scoreIsLikesMinusDislikes() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
         likes(voicing, 5);
         dislikes(voicing, 2);
@@ -59,11 +59,11 @@ class VotingServiceTest {
     }
 
     @Test
-    void сортировкаПоРейтингуПоУбыванию() {
-        Voicing слабый = published("weak", "2026-09-01T10:00:00Z");
-        Voicing сильный = published("strong", "2026-09-01T10:00:00Z");
-        likes(слабый, 1);
-        likes(сильный, 4);
+    void sortsByScoreDescending() {
+        Voicing weak = published("weak", "2026-09-01T10:00:00Z");
+        Voicing strong = published("strong", "2026-09-01T10:00:00Z");
+        likes(weak, 1);
+        likes(strong, 4);
 
         List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
 
@@ -72,13 +72,13 @@ class VotingServiceTest {
     }
 
     @Test
-    void приРавномРейтингеВышеТотУКогоБольшеЛайков() {
-        Voicing тихий = published("quiet", "2026-09-01T10:00:00Z");
-        Voicing громкий = published("loud", "2026-09-01T10:00:00Z");
-        likes(тихий, 1);
-        dislikes(тихий, 0);
-        likes(громкий, 5);
-        dislikes(громкий, 4);
+    void onEqualScoreMoreLikesRanksHigher() {
+        Voicing quiet = published("quiet", "2026-09-01T10:00:00Z");
+        Voicing loud = published("loud", "2026-09-01T10:00:00Z");
+        likes(quiet, 1);
+        dislikes(quiet, 0);
+        likes(loud, 5);
+        dislikes(loud, 4);
 
         List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
 
@@ -86,7 +86,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void приПолномРавенствеВышеБолееСвежая() {
+    void onFullTieNewerRanksHigher() {
         published("old", "2026-09-01T10:00:00Z");
         published("new", "2026-09-05T10:00:00Z");
 
@@ -96,7 +96,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void черновикиНеПопадаютВСписок() {
+    void draftsAreNotRanked() {
         repository.save(Voicing.newDraft("shapochka", "волк", "draft", Instant.parse("2026-09-01T10:00:00Z")));
         published("ready", "2026-09-01T10:00:00Z");
 
@@ -107,7 +107,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void первыйГолосДобавляется() {
+    void firstVoteIsAdded() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
 
         assertEquals(VoteResult.ADDED, voting.vote(voicing.id(), "masha", VoteKind.LIKE));
@@ -115,7 +115,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void повторныйТакойЖеГолосСнимается() {
+    void repeatingSameVoteRemovesIt() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
         voting.vote(voicing.id(), "masha", VoteKind.LIKE);
 
@@ -124,7 +124,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void противоположныйГолосЗаменяет() {
+    void oppositeVoteReplaces() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
         voting.vote(voicing.id(), "masha", VoteKind.LIKE);
 
@@ -133,7 +133,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void заСвоюРольГолосоватьНельзя() {
+    void votingForOwnVoicingIsRejected() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
 
         assertEquals(VoteResult.REJECTED_OWN, voting.vote(voicing.id(), "sergey", VoteKind.LIKE));
@@ -141,7 +141,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void заЧерновикГолосоватьНельзя() {
+    void votingForDraftIsRejected() {
         Voicing draft = Voicing.newDraft("shapochka", "волк", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
         repository.save(draft);
 
@@ -149,7 +149,7 @@ class VotingServiceTest {
     }
 
     @Test
-    void голосованиеЗаНесуществующуюРольОшибка() {
+    void votingForMissingVoicingIsAnError() {
         assertThrows(IllegalArgumentException.class,
                 () -> voting.vote("нет__такой__роли", "masha", VoteKind.LIKE));
     }

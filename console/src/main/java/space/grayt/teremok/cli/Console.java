@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.OptionalInt;
 
 /**
- * Ввод-вывод консоли в кодировке терминала. Жёсткий UTF-8 ломал Windows: её консоль по умолчанию
- * работает в cp866, и кириллица превращалась в кашу в обе стороны. Символы, которых в кодировке
- * терминала нет, заменяются близкими ASCII, а не вопросительными знаками.
+ * Console input and output in the terminal charset. Hard-coded UTF-8 broke Windows, whose console
+ * uses cp866 by default and turned Cyrillic into garbage both ways. Characters the terminal charset
+ * cannot encode are replaced with close ASCII instead of question marks.
  */
 public final class Console {
 
@@ -65,7 +65,7 @@ public final class Console {
         return readLine();
     }
 
-    /** Конец ввода — Ctrl+D или исчерпанный поток — равнозначен «0», иначе меню зациклится. */
+    /** End of input (Ctrl+D or an exhausted stream) counts as 0, otherwise menus would loop forever. */
     public String readLine() {
         try {
             String line = in.readLine();
@@ -80,7 +80,7 @@ public final class Console {
         }
     }
 
-    /** Истинно, если поток ввода уже закрылся — «0» из readLine() в этом случае не настоящий ввод. */
+    /** True once the input stream has closed; the 0 returned by readLine() is then not real input. */
     public boolean isClosed() {
         return closed;
     }
@@ -93,7 +93,7 @@ public final class Console {
         }
     }
 
-    /** Спит указанное время. Возвращает false, если пользователь прервал паузу вводом. */
+    /** Sleeps for the given time. Returns false if the user interrupted the pause with input. */
     public boolean sleepInterruptibly(Duration duration) {
         long deadline = System.currentTimeMillis() + duration.toMillis();
         while (System.currentTimeMillis() < deadline) {
@@ -122,7 +122,7 @@ public final class Console {
         return result.toString();
     }
 
-    /** Превращает ввод «3» в индекс 2. Пустой результат — ввод не является номером пункта. */
+    /** Turns input 3 into index 2. Empty when the input is not a menu item number. */
     public static OptionalInt index(String input, int size) {
         try {
             int number = Integer.parseInt(input.trim());

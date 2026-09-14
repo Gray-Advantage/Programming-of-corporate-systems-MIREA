@@ -19,7 +19,7 @@ import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.Vote;
 import space.grayt.teremok.domain.VoteKind;
 
-/** Каждая роль — отдельная папка data/voicings/<id> с meta.txt, votes.txt и файлами реплик. */
+/** Each voicing is its own directory data/voicings/<id> with meta.txt, votes.txt and line files. */
 public final class FileVoicingRepository implements VoicingRepository {
 
     private static final String META = "meta.txt";
@@ -28,8 +28,8 @@ public final class FileVoicingRepository implements VoicingRepository {
     private static final String AUDIO_SUFFIX = ".wav";
 
     private final Path root;
-    // LinkedHashSet: одна и та же проблема (битая роль/голос) не должна копиться при повторных
-    // вызовах all() — набор дедуплицирует сообщения, сохраняя порядок появления.
+    // LinkedHashSet: the same problem (a broken voicing or vote) must not pile up on repeated
+    // all() calls; the set drops duplicates while keeping the order of appearance.
     private final Set<String> warnings = new LinkedHashSet<>();
 
     public FileVoicingRepository(Path dataDir) {
@@ -71,8 +71,8 @@ public final class FileVoicingRepository implements VoicingRepository {
 
     @Override
     public void save(Voicing voicing) {
-        // LinkedHashMap с фиксированным порядком вставки: §6 спецификации задаёт порядок
-        // строк meta.txt, а Map.of() отдавал бы их в случайном порядке от запуска к запуску.
+        // LinkedHashMap with a fixed insertion order: spec §6 defines the order of
+        // meta.txt lines, while Map.of() would shuffle them from run to run.
         Map<String, String> meta = new LinkedHashMap<>();
         meta.put("book", voicing.bookId());
         meta.put("speaker", voicing.speakerId());
@@ -131,7 +131,7 @@ public final class FileVoicingRepository implements VoicingRepository {
         writeVotes(file, all);
     }
 
-    /** §6: файла votes.txt не должно быть, если голосов нет. */
+    /** Spec §6: votes.txt must not exist when there are no votes. */
     private static void writeVotes(Path file, Map<String, String> all) {
         if (all.isEmpty()) {
             try {
@@ -174,7 +174,7 @@ public final class FileVoicingRepository implements VoicingRepository {
         return value;
     }
 
-    /** Реплика считается записанной, только если файл существует и непустой. */
+    /** A line counts as recorded only if its file exists and is not empty. */
     private static Set<Integer> recordedLines(Path dir) {
         Set<Integer> numbers = new LinkedHashSet<>();
         try (Stream<Path> files = Files.list(dir)) {
@@ -190,7 +190,7 @@ public final class FileVoicingRepository implements VoicingRepository {
                 try {
                     numbers.add(Integer.parseInt(digits));
                 } catch (NumberFormatException e) {
-                    // Посторонний файл в папке роли просто игнорируем.
+                    // Ignore unrelated files in the voicing directory.
                 }
             }
         } catch (IOException e) {

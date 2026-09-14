@@ -16,7 +16,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.TargetDataLine;
 
-/** Запись с микрофона в WAV средствами JDK. Речевой формат: 16 кГц, 16 бит, моно. */
+/** Records the microphone to WAV using only the JDK. Speech format: 16 kHz, 16-bit, mono. */
 public final class JavaSoundRecorder implements AudioRecorder {
 
     public static final AudioFormat FORMAT = new AudioFormat(16000f, 16, 1, true, false);
@@ -47,7 +47,7 @@ public final class JavaSoundRecorder implements AudioRecorder {
         }
     }
 
-    /** Пишет во временный файл и переносит его на место только после успешной остановки. */
+    /** Writes to a temp file and moves it into place only after a successful stop. */
     private static final class Session implements RecordingSession {
 
         private final TargetDataLine line;
@@ -71,23 +71,23 @@ public final class JavaSoundRecorder implements AudioRecorder {
             try (AudioInputStream stream = new AudioInputStream(line)) {
                 AudioSystem.write(stream, AudioFileFormat.Type.WAVE, temp.toFile());
             } catch (IOException e) {
-                // Закрытие линии в stop() обрывает поток — это штатное завершение записи.
+                // Closing the line in stop() ends the stream; that is the normal end of recording.
             }
         }
 
-        /** Забытый стоп не должен заливать диск: через MAX_MILLIS останавливаемся сами. */
+        /** A forgotten stop must not fill the disk, so recording stops itself after MAX_MILLIS. */
         private Thread startWatchdog() {
             Thread thread = new Thread(() -> {
                 try {
                     Thread.sleep(MAX_MILLIS);
-                    // Сторожевой поток — демон без своей консоли: исключение из stop() (например,
-                    // перенос файла не удался) не должно всплыть наружу сырым стек-трейсом.
+                    // The watchdog is a daemon thread without a console: an exception from stop() (for example,
+                    // a failed file move) must not surface as a raw stack trace.
                     stop();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (RuntimeException e) {
-                    // Тихо: пользователь уже не ждёт эту запись, а stop() штатно вызванный позже
-                    // просто ничего не сделает благодаря recording.compareAndSet.
+                    // Stay silent: nobody is waiting for this recording, and a regular stop() called later
+                    // does nothing thanks to recording.compareAndSet.
                 }
             }, "teremok-recorder-watchdog");
             thread.setDaemon(true);
@@ -105,7 +105,7 @@ public final class JavaSoundRecorder implements AudioRecorder {
             if (!recording.compareAndSet(true, false)) {
                 return;
             }
-            // Нормальный стоп будит сторожевой поток раньше срока — ему больше нечего делать.
+            // A normal stop wakes the watchdog early; it has nothing left to do.
             if (Thread.currentThread() != watchdog) {
                 watchdog.interrupt();
             }

@@ -51,7 +51,7 @@ class MyVoicingsScreenTest {
         recorder = new FakeAudioRecorder();
     }
 
-    /** Роль «Мама» с единственной репликой 2, полностью записанная. */
+    /** The Mother voicing with its only line 2, fully recorded. */
     private Voicing completeMama() throws Exception {
         Voicing voicing = Voicing.newDraft("shapochka", "мама", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
         repository.save(voicing);
@@ -68,7 +68,7 @@ class MyVoicingsScreenTest {
                 Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
         VotingService voting = new VotingService(repository);
         PlaybackService playback = new PlaybackService(repository);
-        // Нулевая пауза чтения: тест не должен реально ждать неозвученные реплики.
+        // Zero reading pause: the test must not actually wait for unvoiced lines.
         PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO);
         RecordFlow record = new RecordFlow(console, BOOKS, voicings, player);
         new MyVoicingsScreen(console, BOOKS, voicings, voting, new CastBuilder(voting), playback,
@@ -80,14 +80,14 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void пустойСписокСообщаетЧтоОзвучекНет() {
+    void emptyListSaysThereAreNoVoicings() {
         run("0\n");
 
         assertTrue(printed().contains("Вы пока ничего не озвучивали"));
     }
 
     @Test
-    void показываетКнигуПерсонажаСтатусИПрогресс() throws Exception {
+    void showsBookSpeakerStatusAndProgress() throws Exception {
         completeMama();
 
         run("0\n");
@@ -99,7 +99,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void публикуетПолнуюРоль() throws Exception {
+    void publishesCompleteVoicing() throws Exception {
         completeMama();
 
         run("1\n3\n0\n0\n");
@@ -108,7 +108,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void неполнуюРольПубликоватьОтказывается() throws Exception {
+    void incompleteVoicingIsNotPublished() throws Exception {
         Voicing voicing = Voicing.newDraft("shapochka", "шапочка", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
         repository.save(voicing);
 
@@ -119,7 +119,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void снимаетРольСПубликации() throws Exception {
+    void unpublishesVoicing() throws Exception {
         repository.save(completeMama().withStatus(VoicingStatus.PUBLISHED));
 
         run("1\n3\n0\n0\n");
@@ -128,7 +128,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void прослушиваетРольЦеликомДажеЧерновиком() throws Exception {
+    void playsWholeVoicingEvenAsDraft() throws Exception {
         completeMama();
 
         run("1\n2\n");
@@ -137,7 +137,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void удаляетРольПослеПодтверждения() throws Exception {
+    void deletesVoicingAfterConfirmation() throws Exception {
         completeMama();
 
         run("1\n4\nда\n0\n");
@@ -146,7 +146,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void безПодтвержденияРольОстаётся() throws Exception {
+    void voicingStaysWithoutConfirmation() throws Exception {
         completeMama();
 
         run("1\n4\nнет\n0\n0\n");
@@ -154,7 +154,7 @@ class MyVoicingsScreenTest {
         assertTrue(repository.find(MAMA_ID).isPresent());
     }
 
-    /** Черновик персонажа «Красной Шапочки», у которого записаны первые recorded реплик. */
+    /** A draft of a Little Red Riding Hood speaker whose first recorded lines are recorded. */
     private Voicing draft(String speakerId, int recorded) throws Exception {
         Voicing voicing = Voicing.newDraft("shapochka", speakerId, "sergey", Instant.parse("2026-09-01T10:00:00Z"));
         repository.save(voicing);
@@ -168,7 +168,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void опубликоватьВсеПубликуетКаждуюПолностьюЗаписаннуюРоль() throws Exception {
+    void publishAllPublishesEveryFullyRecordedVoicing() throws Exception {
         Voicing mama = draft("мама", 1);
         Voicing grandma = draft("бабушка", 2);
         Voicing hood = draft("шапочка", 1);
@@ -183,7 +183,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void пунктОпубликоватьВсеПоказываетЧислоГотовыхЧерновиков() throws Exception {
+    void publishAllShowsNumberOfReadyDrafts() throws Exception {
         draft("мама", 1);
         draft("бабушка", 2);
         repository.save(draft("волк", 6).withStatus(VoicingStatus.PUBLISHED));
@@ -195,7 +195,7 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void безГотовыхЧерновиковПунктОпубликоватьВсеСкрыт() throws Exception {
+    void publishAllIsHiddenWithoutReadyDrafts() throws Exception {
         draft("шапочка", 1);
 
         run("0\n");

@@ -27,7 +27,7 @@ class ProfileScreenTest {
     }
 
     @Test
-    void создаётПрофильПоКомандеN(@TempDir Path dir) {
+    void createsProfileWithCommandN(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
 
         Optional<Profile> chosen = screen("n\nСергей\n", profiles).choose();
@@ -37,7 +37,7 @@ class ProfileScreenTest {
     }
 
     @Test
-    void выбираетСуществующийПрофильПоНомеру(@TempDir Path dir) {
+    void selectsExistingProfileByNumber(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
         profiles.create("Сергей");
         profiles.create("Маша");
@@ -46,12 +46,12 @@ class ProfileScreenTest {
     }
 
     @Test
-    void нольЗакрываетПриложение(@TempDir Path dir) {
+    void zeroQuitsApplication(@TempDir Path dir) {
         assertTrue(screen("0\n", new FileProfileRepository(dir)).choose().isEmpty());
     }
 
     @Test
-    void плохоеИмяОбъясняетсяИСпрашиваетсяСнова(@TempDir Path dir) {
+    void invalidNameIsExplainedAndAskedAgain(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
 
         Optional<Profile> chosen = screen("n\nСерёжа Петров\nn\nСерёжа\n", profiles).choose();
@@ -61,7 +61,7 @@ class ProfileScreenTest {
     }
 
     @Test
-    void закрытыйВводНаИмениПрофиляНеСоздаётПрофиль(@TempDir Path dir) {
+    void closedInputAtProfileNameCreatesNoProfile(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
 
         Optional<Profile> chosen = screen("n\n", profiles).choose();
@@ -71,7 +71,7 @@ class ProfileScreenTest {
     }
 
     @Test
-    void непонятныйВводНеЛомаетЭкран(@TempDir Path dir) {
+    void unknownInputDoesNotBreakScreen(@TempDir Path dir) {
         ProfileRepository profiles = new FileProfileRepository(dir);
         profiles.create("Сергей");
 

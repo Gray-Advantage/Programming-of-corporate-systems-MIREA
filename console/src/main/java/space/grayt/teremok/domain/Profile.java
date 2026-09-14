@@ -3,7 +3,7 @@ package space.grayt.teremok.domain;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/** Пользователь приложения. Идентификатор — имя в нижнем регистре. */
+/** An application user. The id is the lowercase name. */
 public record Profile(String id, String name) {
 
     private static final Pattern VALID_NAME = Pattern.compile("^[\\p{L}\\p{N}_-]{1,24}$");

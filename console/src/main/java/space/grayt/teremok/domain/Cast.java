@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/** Раскладка на сеанс: какой ролью озвучен каждый персонаж. Нет ключа — читаем текстом. */
+/** Session casting: which voicing plays each speaker. No key means the speaker is read as text. */
 public record Cast(Map<String, String> voicingBySpeaker) {
 
     public Cast {

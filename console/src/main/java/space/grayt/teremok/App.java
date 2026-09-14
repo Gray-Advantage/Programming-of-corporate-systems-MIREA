@@ -28,7 +28,7 @@ import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.storage.StorageException;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Проводка зависимостей и внешний цикл приложения. */
+/** Wires the dependencies and runs the outer application loop. */
 public final class App {
 
     private final Path dataDir;
@@ -43,8 +43,8 @@ public final class App {
     }
 
     /**
-     * pauseTransform применяется к паузам чтения неозвученных реплик — только для тестов,
-     * чтобы сюита не спала реальное время; боевой Main остаётся на конструкторе без него.
+     * pauseTransform is applied to the reading pauses of unvoiced lines. It exists for tests only,
+     * so the suite does not sleep in real time; the production Main uses the constructor without it.
      */
     public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
             UnaryOperator<Duration> pauseTransform) {
@@ -96,12 +96,12 @@ public final class App {
                 }
             }
         } catch (StorageException e) {
-            // Сообщения StorageException уже написаны для человека (§8) — печатаем как есть
-            // и завершаем работу штатно, не пробрасывая сырое исключение выше слоя cli.
+            // StorageException messages are already written for people (spec §8), so print them as is
+            // and shut down normally instead of letting a raw exception escape the cli layer.
             console.println(e.getMessage());
             console.println("Работа завершена.");
         } catch (RuntimeException e) {
-            // Последний рубеж: неучтённая ошибка не должна печататься сырым стек-трейсом.
+            // Last line of defence: an unexpected error must not be printed as a raw stack trace.
             console.println("Произошла непредвиденная ошибка. Работа завершена.");
         }
     }

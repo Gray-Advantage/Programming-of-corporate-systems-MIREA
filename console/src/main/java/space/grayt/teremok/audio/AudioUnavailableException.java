@@ -1,6 +1,6 @@
 package space.grayt.teremok.audio;
 
-/** Проблема звукового тракта: устройство недоступно либо запись не сохранилась. */
+/** Audio failure: the device is unavailable or the recording could not be saved. */
 public class AudioUnavailableException extends RuntimeException {
 
     public AudioUnavailableException(String message) {

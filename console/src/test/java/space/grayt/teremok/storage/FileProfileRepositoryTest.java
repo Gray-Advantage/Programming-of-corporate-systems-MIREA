@@ -11,7 +11,7 @@ import space.grayt.teremok.domain.Profile;
 class FileProfileRepositoryTest {
 
     @Test
-    void сохраняетИВозвращаетПрофиль(@TempDir Path dir) {
+    void createsAndReturnsProfile(@TempDir Path dir) {
         ProfileRepository repository = new FileProfileRepository(dir);
 
         Profile created = repository.create("Сергей");
@@ -22,7 +22,7 @@ class FileProfileRepositoryTest {
     }
 
     @Test
-    void профильВиденПослеПерезапуска(@TempDir Path dir) {
+    void profileSurvivesRestart(@TempDir Path dir) {
         new FileProfileRepository(dir).create("Маша");
 
         ProfileRepository reopened = new FileProfileRepository(dir);
@@ -31,7 +31,7 @@ class FileProfileRepositoryTest {
     }
 
     @Test
-    void дубльПоРегиструОтклоняется(@TempDir Path dir) {
+    void caseInsensitiveDuplicateIsRejected(@TempDir Path dir) {
         ProfileRepository repository = new FileProfileRepository(dir);
         repository.create("Сергей");
 
@@ -43,17 +43,17 @@ class FileProfileRepositoryTest {
     }
 
     @Test
-    void пустойСписокПрофилейНаЧистомКаталоге(@TempDir Path dir) {
+    void emptyDirectoryHasNoProfiles(@TempDir Path dir) {
         assertEquals(List.of(), new FileProfileRepository(dir).findAll());
     }
 
     @Test
-    void неизвестныйПрофильНеНаходится(@TempDir Path dir) {
+    void unknownProfileIsNotFound(@TempDir Path dir) {
         assertTrue(new FileProfileRepository(dir).findById("никто").isEmpty());
     }
 
     @Test
-    void именаСПробеламиИСпецсимволамиОтклоняются(@TempDir Path dir) {
+    void namesWithSpacesAndSpecialCharactersAreRejected(@TempDir Path dir) {
         ProfileRepository repository = new FileProfileRepository(dir);
 
         assertThrows(IllegalArgumentException.class, () -> repository.create("Серёжа Петров"));
@@ -63,14 +63,14 @@ class FileProfileRepositoryTest {
     }
 
     @Test
-    void допустимыБуквыЦифрыДефисИПодчёркивание(@TempDir Path dir) {
+    void lettersDigitsHyphenAndUnderscoreAreAllowed(@TempDir Path dir) {
         ProfileRepository repository = new FileProfileRepository(dir);
 
         assertEquals("маша-2_вторая", repository.create("Маша-2_вторая").id());
     }
 
     @Test
-    void имяПрофиляНаходитсяПоИдентификатору(@TempDir Path dir) {
+    void profileNameIsFoundById(@TempDir Path dir) {
         ProfileRepository repository = new FileProfileRepository(dir);
         repository.create("Сергей");
 
@@ -78,7 +78,7 @@ class FileProfileRepositoryTest {
     }
 
     @Test
-    void дляНеизвестногоПрофиляИменемСлужитИдентификатор(@TempDir Path dir) {
+    void unknownProfileNameFallsBackToId(@TempDir Path dir) {
         assertEquals("никто", new FileProfileRepository(dir).nameOf("никто"));
     }
 }

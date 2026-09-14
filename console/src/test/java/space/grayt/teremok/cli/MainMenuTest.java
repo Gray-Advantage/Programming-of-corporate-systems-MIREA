@@ -33,12 +33,12 @@ class MainMenuTest {
     private static final String WARNING = "Роль битая пропущена";
 
     /**
-     * В meta.txt нет обязательных полей, поэтому хранилище пропускает роль и заводит предупреждение.
-     * Предупреждение появляется при первом заходе в «Мои озвучки» и должно быть показано ровно один
-     * раз, а не на каждом витке меню.
+     * meta.txt lacks required fields, so storage skips the voicing and records a warning.
+     * The warning appears on the first visit to My voicings and must be shown exactly once,
+     * not on every menu loop.
      */
     @Test
-    void предупреждениеОБитойРолиПечатаетсяОдинРаз(@TempDir Path dir) throws Exception {
+    void brokenVoicingWarningIsPrintedOnce(@TempDir Path dir) throws Exception {
         Files.createDirectories(dir.resolve("voicings").resolve("битая"));
         Files.write(dir.resolve("voicings").resolve("битая").resolve("meta.txt"),
                 List.of("book=shapochka"), UTF_8);

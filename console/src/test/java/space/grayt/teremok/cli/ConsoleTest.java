@@ -17,7 +17,7 @@ class ConsoleTest {
     }
 
     @Test
-    void читаетСтрокиВUtf8ИОбрезаетПробелы() {
+    void readsUtf8LinesAndTrimsSpaces() {
         Console console = console("  Сергей  \nМаша\n", new ByteArrayOutputStream());
 
         assertEquals("Сергей", console.readLine());
@@ -25,12 +25,12 @@ class ConsoleTest {
     }
 
     @Test
-    void конецВводаРавнозначенКомандеВыхода() {
+    void endOfInputMeansExit() {
         assertEquals("0", console("", new ByteArrayOutputStream()).readLine());
     }
 
     @Test
-    void печатаетКириллицуВUtf8() {
+    void printsCyrillicInUtf8() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         console("", out).println("Волк: Куда ты идёшь?");
@@ -39,7 +39,7 @@ class ConsoleTest {
     }
 
     @Test
-    void приглашениеПечатаетсяПередЧтением() {
+    void promptIsPrintedBeforeReading() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = console("да\n", out);
 
@@ -48,13 +48,13 @@ class ConsoleTest {
     }
 
     @Test
-    void видитЧтоВводУжеЖдёт() {
+    void seesPendingInput() {
         assertTrue(console("Enter\n", new ByteArrayOutputStream()).hasPendingInput());
         assertFalse(console("", new ByteArrayOutputStream()).hasPendingInput());
     }
 
     @Test
-    void паузаПрерываетсяВводом() {
+    void pauseIsInterruptedByInput() {
         Console withInput = console("\n", new ByteArrayOutputStream());
         Console withoutInput = console("", new ByteArrayOutputStream());
 
@@ -63,7 +63,7 @@ class ConsoleTest {
     }
 
     @Test
-    void признакЗакрытияВводаВзводитсяТолькоПослеКонцаПотока() {
+    void closedFlagIsSetOnlyAfterEndOfStream() {
         Console console = console("Сергей\n", new ByteArrayOutputStream());
 
         assertFalse(console.isClosed());
@@ -74,7 +74,7 @@ class ConsoleTest {
     }
 
     @Test
-    void разбираетНомерПунктаМеню() {
+    void parsesMenuItemNumber() {
         assertEquals(OptionalInt.of(0), Console.index("1", 3));
         assertEquals(OptionalInt.of(2), Console.index("3", 3));
         assertEquals(OptionalInt.empty(), Console.index("4", 3));
@@ -86,7 +86,7 @@ class ConsoleTest {
     private static final Charset CP866 = Charset.forName("IBM866");
 
     @Test
-    void кириллицаВыводитсяВКодировкеТерминала() {
+    void cyrillicIsWrittenInTerminalCharset() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         new Console(new ByteArrayInputStream(new byte[0]), out, CP866).println("Кто вы?");
@@ -95,7 +95,7 @@ class ConsoleTest {
     }
 
     @Test
-    void вводЧитаетсяВКодировкеТерминала() {
+    void inputIsDecodedInTerminalCharset() {
         byte[] typed = "Сергей\n".getBytes(CP866);
 
         Console console = new Console(new ByteArrayInputStream(typed), new ByteArrayOutputStream(), CP866);
@@ -104,7 +104,7 @@ class ConsoleTest {
     }
 
     @Test
-    void символыКоторыхНетВКодировкеТерминалаЗаменяютсяБлизкими() {
+    void unencodableSymbolsAreReplacedWithCloseAscii() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         new Console(new ByteArrayInputStream(new byte[0]), out, CP866).println("Мама — «привет» ● ·");
@@ -113,7 +113,7 @@ class ConsoleTest {
     }
 
     @Test
-    void вUtf8ТипографскиеСимволыОстаютсяКакЕсть() {
+    void typographicSymbolsStayIntactInUtf8() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         console("", out).println("— «» ● ·");
