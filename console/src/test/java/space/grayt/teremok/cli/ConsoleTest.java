@@ -5,6 +5,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.OptionalInt;
 import org.junit.jupiter.api.Test;
@@ -35,6 +38,17 @@ class ConsoleTest {
         console("", out).println("Волк: Куда ты идёшь?");
 
         assertEquals("Волк: Куда ты идёшь?", out.toString(UTF_8).strip());
+    }
+
+    @Test
+    void используетКодировкуПереданногоСимвольногоПотока() {
+        Charset windows1251 = Charset.forName("windows-1251");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Console console = new Console(new StringReader(""), new OutputStreamWriter(out, windows1251));
+
+        console.println("Привет");
+
+        assertEquals("Привет", out.toString(windows1251).strip());
     }
 
     @Test
