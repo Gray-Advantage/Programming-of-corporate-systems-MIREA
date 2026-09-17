@@ -12,7 +12,7 @@ public final class Main {
     }
 
     public static void main(String[] args) {
-        Console console = new Console(System.in, System.out);
+        Console console = Console.system();
         new App(Path.of("data"), console, new JavaSoundRecorder(), new JavaSoundPlayer(), Clock.systemUTC()).run();
     }
 }
