@@ -95,6 +95,16 @@ class ConsoleTest {
     }
 
     @Test
+    void cyrillicIsWrittenInAnyGivenCharset() {
+        Charset windows1251 = Charset.forName("windows-1251");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        new Console(new ByteArrayInputStream(new byte[0]), out, windows1251).println("Привет");
+
+        assertEquals("Привет", out.toString(windows1251).strip());
+    }
+
+    @Test
     void inputIsDecodedInTerminalCharset() {
         byte[] typed = "Сергей\n".getBytes(CP866);
 

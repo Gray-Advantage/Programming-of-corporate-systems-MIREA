@@ -37,6 +37,7 @@ public final class Console {
     private final CharsetEncoder encoder;
     private boolean closed;
 
+    /** Console over UTF-8 streams: files, pipes and test buffers. */
     public Console(InputStream in, OutputStream out) {
         this(in, out, UTF_8);
     }
@@ -45,6 +46,15 @@ public final class Console {
         this.in = new BufferedReader(new InputStreamReader(in, charset));
         this.out = new PrintStream(out, true, charset);
         this.encoder = charset.newEncoder();
+    }
+
+    /**
+     * Console over the standard streams in the charset of the real terminal. Without a terminal
+     * (IDE, Gradle, pipe) the streams are treated as UTF-8.
+     */
+    public static Console system() {
+        java.io.Console terminal = System.console();
+        return new Console(System.in, System.out, terminal != null ? terminal.charset() : UTF_8);
     }
 
     public void print(String text) {
