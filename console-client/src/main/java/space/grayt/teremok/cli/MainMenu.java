@@ -45,8 +45,8 @@ public final class MainMenu {
             console.println();
             console.println("Теремок — " + profile.name());
             console.println();
-            console.println("  1  Слушать книгу");
-            console.println("  2  Озвучить книгу");
+            console.println("  1  Слушать произведение");
+            console.println("  2  Озвучить произведение");
             console.println("  3  Мои озвучки");
             console.println("  4  Сменить профиль");
             console.println("  5  Количество записей в CatalogService");

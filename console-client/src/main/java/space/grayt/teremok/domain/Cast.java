@@ -4,30 +4,30 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/** Session casting: which voicing plays each speaker. No key means the speaker is read as text. */
-public record Cast(Map<String, String> voicingBySpeaker) {
+/** Session casting: which voicing plays each voice part. No key means it is read as text. */
+public record Cast(Map<String, String> voicingByVoicePart) {
 
     public Cast {
-        voicingBySpeaker = Map.copyOf(voicingBySpeaker);
+        voicingByVoicePart = Map.copyOf(voicingByVoicePart);
     }
 
     public static Cast empty() {
         return new Cast(Map.of());
     }
 
-    public Optional<String> voicingFor(String speakerId) {
-        return Optional.ofNullable(voicingBySpeaker.get(speakerId));
+    public Optional<String> voicingFor(String voicePartId) {
+        return Optional.ofNullable(voicingByVoicePart.get(voicePartId));
     }
 
-    public Cast with(String speakerId, String voicingId) {
-        Map<String, String> updated = new LinkedHashMap<>(voicingBySpeaker);
-        updated.put(speakerId, voicingId);
+    public Cast with(String voicePartId, String voicingId) {
+        Map<String, String> updated = new LinkedHashMap<>(voicingByVoicePart);
+        updated.put(voicePartId, voicingId);
         return new Cast(updated);
     }
 
-    public Cast without(String speakerId) {
-        Map<String, String> updated = new LinkedHashMap<>(voicingBySpeaker);
-        updated.remove(speakerId);
+    public Cast without(String voicePartId) {
+        Map<String, String> updated = new LinkedHashMap<>(voicingByVoicePart);
+        updated.remove(voicePartId);
         return new Cast(updated);
     }
 }

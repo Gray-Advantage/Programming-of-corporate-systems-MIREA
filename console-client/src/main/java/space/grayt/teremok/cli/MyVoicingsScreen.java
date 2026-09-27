@@ -7,19 +7,19 @@ import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
-import space.grayt.teremok.book.BookLibrary;
-import space.grayt.teremok.domain.Book;
 import space.grayt.teremok.domain.Cast;
 import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
+import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.textwork.TextWorkCatalog;
 
 /** The user's own voicings and actions on them. */
 public final class MyVoicingsScreen {
 
     private final Console console;
-    private final BookLibrary books;
+    private final TextWorkCatalog textWorks;
     private final VoicingService voicings;
     private final VotingService voting;
     private final CastBuilder castBuilder;
@@ -27,11 +27,12 @@ public final class MyVoicingsScreen {
     private final PlaybackConsole playbackConsole;
     private final RecordFlow record;
 
-    public MyVoicingsScreen(Console console, BookLibrary books, VoicingService voicings, VotingService voting,
+    public MyVoicingsScreen(Console console, TextWorkCatalog textWorks, VoicingService voicings,
+                            VotingService voting,
                             CastBuilder castBuilder, PlaybackService playback, PlaybackConsole playbackConsole,
                             RecordFlow record) {
         this.console = console;
-        this.books = books;
+        this.textWorks = textWorks;
         this.voicings = voicings;
         this.voting = voting;
         this.castBuilder = castBuilder;
@@ -81,52 +82,53 @@ public final class MyVoicingsScreen {
     }
 
     private String describe(Voicing voicing) {
-        Optional<Book> book = books.find(voicing.bookId());
-        String bookTitle = book.map(Book::title).orElse(voicing.bookId());
-        String speakerName = book.flatMap(found -> found.speaker(voicing.speakerId()))
-                .map(Speaker::name).orElse(voicing.speakerId());
-        String progress = book
-                .map(found -> voicings.recordedCount(voicing, found) + "/" + found.linesOf(voicing.speakerId()).size())
+        Optional<TextWork> textWork = textWorks.find(voicing.textWorkId());
+        String textWorkTitle = textWork.map(TextWork::title).orElse(voicing.textWorkId());
+        String voicePartName = textWork.flatMap(found -> found.voicePart(voicing.voicePartId()))
+                .map(VoicePart::name).orElse(voicing.voicePartId());
+        String progress = textWork
+                .map(found -> voicings.recordedCount(voicing, found) + "/"
+                        + found.fragmentsOf(voicing.voicePartId()).size())
                 .orElse("?");
         String status = voicing.status() == VoicingStatus.PUBLISHED ? "опубликовано" : "черновик";
         String rating = voting.rated(voicing.id())
                 .map(rated -> "  [" + (rated.score() > 0 ? "+" + rated.score() : rated.score()) + "]")
                 .orElse("");
-        return bookTitle + " · " + speakerName + "  " + status + "  " + progress + rating;
+        return textWorkTitle + " · " + voicePartName + "  " + status + "  " + progress + rating;
     }
 
-    /** Drafts with every line recorded; these can be published all at once. */
+    /** Drafts with every fragment recorded; these can be published all at once. */
     private List<Voicing> readyToPublish(List<Voicing> mine) {
         return mine.stream()
                 .filter(voicing -> voicing.status() == VoicingStatus.DRAFT)
-                .filter(voicing -> books.find(voicing.bookId())
-                        .map(book -> voicings.isComplete(voicing, book))
+                .filter(voicing -> textWorks.find(voicing.textWorkId())
+                        .map(textWork -> voicings.isComplete(voicing, textWork))
                         .orElse(false))
                 .toList();
     }
 
     private void publishAll(List<Voicing> mine, List<Voicing> ready) {
         if (ready.isEmpty()) {
-            console.println("Нет черновиков, у которых записаны все реплики.");
+            console.println("Нет черновиков, у которых записаны все фрагменты.");
             return;
         }
         for (Voicing voicing : ready) {
-            voicings.publish(voicing, books.find(voicing.bookId()).orElseThrow());
+            voicings.publish(voicing, textWorks.find(voicing.textWorkId()).orElseThrow());
         }
         console.println("Опубликовано: " + Plural.of(ready.size(), "роль", "роли", "ролей") + ".");
         List<Voicing> unfinished = mine.stream()
                 .filter(voicing -> voicing.status() == VoicingStatus.DRAFT && !ready.contains(voicing))
                 .toList();
         if (!unfinished.isEmpty()) {
-            console.println("Остались черновиками — записаны не все реплики:");
+            console.println("Остались черновиками — записаны не все фрагменты:");
             unfinished.forEach(voicing -> console.println("  " + describe(voicing)));
         }
     }
 
     private void openRole(Voicing voicing) {
-        Optional<Book> book = books.find(voicing.bookId());
-        if (book.isEmpty()) {
-            console.println("Книга " + voicing.bookId() + " больше не входит в комплект.");
+        Optional<TextWork> textWork = textWorks.find(voicing.textWorkId());
+        if (textWork.isEmpty()) {
+            console.println("Произведение " + voicing.textWorkId() + " больше не доступно.");
             return;
         }
         while (true) {
@@ -142,9 +144,9 @@ public final class MyVoicingsScreen {
             console.println("  0  Назад");
 
             switch (console.ask("> ")) {
-                case "1" -> record.recordRole(book.get(), current);
-                case "2" -> playRole(book.get(), current);
-                case "3" -> togglePublication(book.get(), current);
+                case "1" -> record.recordRole(textWork.get(), current);
+                case "2" -> playRole(textWork.get(), current);
+                case "3" -> togglePublication(textWork.get(), current);
                 case "4" -> {
                     if (deleteConfirmed(current)) {
                         return;
@@ -158,20 +160,20 @@ public final class MyVoicingsScreen {
         }
     }
 
-    /** The user's own speaker plays from this voicing even as a draft; the rest come from the best voicings. */
-    private void playRole(Book book, Voicing voicing) {
-        Cast cast = castBuilder.best(book).with(voicing.speakerId(), voicing.id());
-        playbackConsole.play(playback.plan(book, cast));
+    /** The user's own voice part plays from this voicing even while it is a draft. */
+    private void playRole(TextWork textWork, Voicing voicing) {
+        Cast cast = castBuilder.best(textWork).with(voicing.voicePartId(), voicing.id());
+        playbackConsole.play(playback.plan(textWork, cast));
     }
 
-    private void togglePublication(Book book, Voicing voicing) {
+    private void togglePublication(TextWork textWork, Voicing voicing) {
         if (voicing.status() == VoicingStatus.PUBLISHED) {
             voicings.unpublish(voicing);
             console.println("Роль снята с публикации. Голоса сохранены.");
             return;
         }
         try {
-            voicings.publish(voicing, book);
+            voicings.publish(voicing, textWork);
             console.println("Роль опубликована.");
         } catch (IllegalStateException e) {
             console.println(e.getMessage());

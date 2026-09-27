@@ -10,20 +10,20 @@ import space.grayt.teremok.app.VoteResult;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
-import space.grayt.teremok.book.BookLibrary;
-import space.grayt.teremok.domain.Book;
 import space.grayt.teremok.domain.Cast;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.RatedVoicing;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.VoteKind;
+import space.grayt.teremok.domain.VoicePart;
 import space.grayt.teremok.storage.ProfileRepository;
+import space.grayt.teremok.textwork.TextWorkCatalog;
 
-/** Choosing a book and a cast, and listening. Votes are cast here too, in the list of voicings. */
+/** Choosing a text work and a cast, and listening. Votes are cast here too. */
 public final class ListenFlow {
 
     private final Console console;
-    private final BookLibrary books;
+    private final TextWorkCatalog textWorks;
     private final CastBuilder castBuilder;
     private final VotingService voting;
     private final PlaybackService playback;
@@ -31,11 +31,11 @@ public final class ListenFlow {
     private final AudioPlayer player;
     private final ProfileRepository profiles;
 
-    public ListenFlow(Console console, BookLibrary books, CastBuilder castBuilder, VotingService voting,
+    public ListenFlow(Console console, TextWorkCatalog textWorks, CastBuilder castBuilder, VotingService voting,
             PlaybackService playback, PlaybackConsole playbackConsole, AudioPlayer player,
             ProfileRepository profiles) {
         this.console = console;
-        this.books = books;
+        this.textWorks = textWorks;
         this.castBuilder = castBuilder;
         this.voting = voting;
         this.playback = playback;
@@ -45,18 +45,18 @@ public final class ListenFlow {
     }
 
     public void run(Profile profile) {
-        Optional<Book> chosen = chooseBook();
+        Optional<TextWork> chosen = chooseTextWork();
         if (chosen.isEmpty()) {
             return;
         }
-        Book book = chosen.get();
-        Cast cast = castBuilder.best(book);
+        TextWork textWork = chosen.get();
+        Cast cast = castBuilder.best(textWork);
         while (true) {
-            showCast(book, cast);
+            showCast(textWork, cast);
             String command = console.ask("> ");
             switch (command) {
-                case "s" -> playbackConsole.play(playback.plan(book, cast));
-                case "n" -> cast = changeVoice(profile, book, cast);
+                case "s" -> playbackConsole.play(playback.plan(textWork, cast));
+                case "n" -> cast = changeVoice(profile, textWork, cast);
                 case "0" -> {
                     return;
                 }
@@ -65,38 +65,39 @@ public final class ListenFlow {
         }
     }
 
-    private void showCast(Book book, Cast cast) {
+    private void showCast(TextWork textWork, Cast cast) {
         console.println();
-        console.println(book.title() + " — " + Plural.lines(book.lines().size()));
+        console.println(textWork.title() + " — " + Plural.fragments(textWork.fragments().size()));
         console.println();
-        List<Speaker> speakers = book.speakers();
-        for (int i = 0; i < speakers.size(); i++) {
-            Speaker speaker = speakers.get(i);
-            String voice = cast.voicingFor(speaker.id())
+        List<VoicePart> voiceParts = textWork.voiceParts();
+        for (int i = 0; i < voiceParts.size(); i++) {
+            VoicePart voicePart = voiceParts.get(i);
+            String voice = cast.voicingFor(voicePart.id())
                     .flatMap(voting::rated)
                     .map(rated -> profiles.nameOf(rated.voicing().authorId()) + "  [" + withSign(rated.score()) + "]")
                     .orElse("— текстом —");
-            console.println("  " + (i + 1) + "  " + speaker.name() + "  " + voice);
+            console.println("  " + (i + 1) + "  " + voicePart.name() + "  " + voice);
         }
         console.println();
         console.println("  s  Слушать    n  Сменить голос    0  Назад");
     }
 
-    private Cast changeVoice(Profile profile, Book book, Cast cast) {
-        List<Speaker> speakers = book.speakers();
-        console.println("Кому меняем голос?");
-        Optional<Speaker> speaker = pick(speakers);
-        if (speaker.isEmpty()) {
+    private Cast changeVoice(Profile profile, TextWork textWork, Cast cast) {
+        List<VoicePart> voiceParts = textWork.voiceParts();
+        console.println("Для какой роли меняем голос?");
+        Optional<VoicePart> voicePart = pick(voiceParts);
+        if (voicePart.isEmpty()) {
             return cast;
         }
-        return chooseVoicing(profile, book, cast, speaker.get());
+        return chooseVoicing(profile, textWork, cast, voicePart.get());
     }
 
-    private Cast chooseVoicing(Profile profile, Book book, Cast cast, Speaker speaker) {
+    private Cast chooseVoicing(Profile profile, TextWork textWork, Cast cast, VoicePart voicePart) {
         while (true) {
-            List<RatedVoicing> ranked = voting.ranked(book.id(), speaker.id());
+            List<RatedVoicing> ranked = voting.ranked(textWork.id(), voicePart.id());
             console.println();
-            console.println(speaker.name() + " — " + Plural.lines(book.linesOf(speaker.id()).size()));
+            console.println(voicePart.name() + " — "
+                    + Plural.fragments(textWork.fragmentsOf(voicePart.id()).size()));
             console.println();
             for (int i = 0; i < ranked.size(); i++) {
                 RatedVoicing rated = ranked.get(i);
@@ -120,9 +121,9 @@ public final class ListenFlow {
                 return cast;
             }
             if (command.equals("t")) {
-                return cast.without(speaker.id());
+                return cast.without(voicePart.id());
             }
-            Optional<Cast> updated = applyCommand(profile, cast, speaker, ranked, command);
+            Optional<Cast> updated = applyCommand(profile, cast, voicePart, ranked, command);
             if (updated.isPresent()) {
                 return updated.get();
             }
@@ -130,7 +131,7 @@ public final class ListenFlow {
     }
 
     /** A non-empty result means the cast is chosen and the screen should close. */
-    private Optional<Cast> applyCommand(Profile profile, Cast cast, Speaker speaker,
+    private Optional<Cast> applyCommand(Profile profile, Cast cast, VoicePart voicePart,
             List<RatedVoicing> ranked, String command) {
         if (command.length() > 2 && command.charAt(1) == ' ') {
             OptionalInt index = Console.index(command.substring(2), ranked.size());
@@ -149,7 +150,7 @@ public final class ListenFlow {
         }
         OptionalInt index = Console.index(command, ranked.size());
         if (index.isPresent()) {
-            return Optional.of(cast.with(speaker.id(), ranked.get(index.getAsInt()).voicing().id()));
+            return Optional.of(cast.with(voicePart.id(), ranked.get(index.getAsInt()).voicing().id()));
         }
         console.println("Не понимаю. Введите номер, t, 0 или команду p/l/d с номером.");
         return Optional.empty();
@@ -158,7 +159,7 @@ public final class ListenFlow {
     private void playSample(RatedVoicing target) {
         Optional<Path> sample = playback.sample(target.voicing());
         if (sample.isEmpty()) {
-            console.println("У этой озвучки не осталось записанных реплик.");
+            console.println("У этой озвучки не осталось записанных фрагментов.");
             return;
         }
         try {
@@ -180,10 +181,10 @@ public final class ListenFlow {
         }
     }
 
-    private Optional<Book> chooseBook() {
-        List<Book> all = books.all();
+    private Optional<TextWork> chooseTextWork() {
+        List<TextWork> all = textWorks.all();
         if (all.isEmpty()) {
-            console.println("Нет ни одной книги.");
+            console.println("Нет ни одного произведения.");
             return Optional.empty();
         }
         console.println();

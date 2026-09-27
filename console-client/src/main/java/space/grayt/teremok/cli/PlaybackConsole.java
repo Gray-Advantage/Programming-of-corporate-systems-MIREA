@@ -40,7 +40,7 @@ public final class PlaybackConsole {
         console.println();
         for (PlaybackStep step : steps) {
             String voice = step.isSpoken() ? profiles.nameOf(step.authorId()) : "текстом";
-            console.println("[" + step.speakerName() + " · " + voice + "] " + step.line().text());
+            console.println("[" + step.voicePartName() + " · " + voice + "] " + step.fragment().text());
             if (!playStep(step)) {
                 console.readLine();
                 console.println("Остановлено.");
@@ -48,13 +48,14 @@ public final class PlaybackConsole {
             }
         }
         console.println();
-        console.println("Книга закончилась.");
+        console.println("Произведение закончилось.");
     }
 
     /** false means the user interrupted playback. */
     private boolean playStep(PlaybackStep step) {
         if (!step.isSpoken()) {
-            return console.sleepInterruptibly(pauseTransform.apply(PlaybackService.readingPause(step.line().text())));
+            return console.sleepInterruptibly(
+                    pauseTransform.apply(PlaybackService.readingPause(step.fragment().text())));
         }
         try {
             player.play(step.audio());

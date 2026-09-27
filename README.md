@@ -13,10 +13,10 @@ backend/
   backend-shared/
     kafka-events/                  общий контракт события text-work-added
 backend-client-shared/
-  placeholder.txt
+  src/main/java/                    общие REST-контракты backend и клиентов
 console-client/                    нативное консольное приложение
 examples/
-  text-work-added.json
+  text-work-added-*.json             примеры событий для трёх сказок
 compose.yaml
 ```
 
@@ -44,10 +44,13 @@ docker compose run --rm kafka-topics-init
 Команду создания топиков можно запускать повторно: она идемпотентна. Сейчас создаётся
 один топик `text-work-added`.
 
-Проверить количество записей через Traefik:
+Получить данные через Traefik:
 
 ```text
+GET http://localhost:8080/api/v1/catalog/text-works
+GET http://localhost:8080/api/v1/catalog/text-works/{id}
 GET http://localhost:8080/api/v1/catalog/text-works/count
+GET http://localhost:8080/api/v1/text-work-content/text-works/{id}
 GET http://localhost:8080/api/v1/text-work-content/text-works/count
 ```
 
@@ -65,10 +68,12 @@ docker compose down --volumes
 
 ## TextWorkDeployer
 
-Опубликовать готовый пример:
+Опубликовать готовые примеры:
 
 ```shell
-docker compose run --build --rm text-work-deployer /examples/text-work-added.json
+docker compose run --build --rm text-work-deployer /examples/text-work-added-shapochka.json
+docker compose run --build --rm text-work-deployer /examples/text-work-added-teremok.json
+docker compose run --build --rm text-work-deployer /examples/text-work-added-kolobok.json
 ```
 
 Для ручного ввода запустите deployer без пути, вставьте JSON и завершите ввод
@@ -79,9 +84,10 @@ docker compose run --build --rm text-work-deployer
 ```
 
 Deployer сначала преобразует JSON в `TextWorkAddedEvent`, проверяет обязательные поля,
-а затем отправляет событие в Kafka с ключом `textWork.id`. Оба сервиса получают каждое
-событие в собственных consumer groups и сохраняют свои проекции в in-memory
-репозиториях.
+уникальность UUID и порядковых номеров, ссылки фрагментов на роли, счётчики фрагментов
+и правила оригинала/перевода. Только после этого событие отправляется в Kafka с ключом
+`textWork.id`. Оба сервиса получают каждое событие в собственных consumer groups и
+сохраняют свои проекции в in-memory репозиториях.
 
 ## Console client
 
@@ -100,8 +106,12 @@ macOS/Linux:
 ./gradlew :console-client:run
 ```
 
-В главном меню есть отдельные пункты для количества записей в `CatalogService` и
-`TextWorkContentService`.
+При запуске клиент получает список произведений из `CatalogService`, для каждого из
+них запрашивает текст и роли в `TextWorkContentService` и объединяет ответы по UUID.
+Внутренняя модель клиента использует те же понятия: `TextWork`, `VoicePart` и
+`TextWorkFragment`.
+Локальные файлы произведений не используются обычным запуском. В главном меню также остаются
+диагностические пункты с количеством записей в обоих сервисах.
 
 ## Сборка Java-проектов
 

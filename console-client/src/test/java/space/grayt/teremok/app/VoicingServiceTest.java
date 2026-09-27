@@ -13,10 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import space.grayt.teremok.audio.FakeAudioRecorder;
 import space.grayt.teremok.audio.RecordingSession;
-import space.grayt.teremok.book.BookParser;
-import space.grayt.teremok.domain.Book;
-import space.grayt.teremok.domain.Line;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.textwork.TextWorkParser;
+import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.domain.TextWorkFragment;
+import space.grayt.teremok.domain.VoicePart;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.storage.FileVoicingRepository;
@@ -24,14 +24,14 @@ import space.grayt.teremok.storage.VoicingRepository;
 
 class VoicingServiceTest {
 
-    private static final Book BOOK = BookParser.parse("shapochka", """
+    private static final TextWork BOOK = TextWorkParser.parse("shapochka", """
             title: Красная Шапочка
             ---
             Волк: Куда ты идёшь?
             Шапочка: К бабушке.
             Волк: А где живёт бабушка?
             """);
-    private static final String WOLF = Speaker.idOf("Волк");
+    private static final String WOLF = VoicePart.idOf("Волк");
     private static final Instant NOW = Instant.parse("2026-09-07T12:00:00Z");
 
     private VoicingRepository repository;
@@ -62,10 +62,10 @@ class VoicingServiceTest {
     }
 
     @Test
-    void missingLinesAreTheSpeakersLines() {
+    void missingFragmentsAreTheSpeakersLines() {
         Voicing voicing = service.draftFor(BOOK, WOLF, "sergey");
 
-        assertEquals(List.of(1, 3), service.missingLines(voicing, BOOK).stream().map(Line::number).toList());
+        assertEquals(List.of(1, 3), service.missingFragments(voicing, BOOK).stream().map(TextWorkFragment::number).toList());
     }
 
     @Test
@@ -76,7 +76,7 @@ class VoicingServiceTest {
         Voicing reloaded = service.reload(voicing);
 
         assertEquals(1, service.recordedCount(reloaded, BOOK));
-        assertEquals(List.of(3), service.missingLines(reloaded, BOOK).stream().map(Line::number).toList());
+        assertEquals(List.of(3), service.missingFragments(reloaded, BOOK).stream().map(TextWorkFragment::number).toList());
         assertTrue(Files.exists(repository.audioFile(voicing.id(), 1)));
     }
 

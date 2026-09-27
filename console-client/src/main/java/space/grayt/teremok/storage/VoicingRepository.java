@@ -11,7 +11,7 @@ public interface VoicingRepository {
 
     Optional<Voicing> find(String voicingId);
 
-    List<Voicing> findByBook(String bookId);
+    List<Voicing> findByTextWork(String textWorkId);
 
     List<Voicing> findByAuthor(String authorId);
 
@@ -19,8 +19,8 @@ public interface VoicingRepository {
 
     void delete(String voicingId);
 
-    /** Path of a line's audio file. The file may not exist yet. */
-    Path audioFile(String voicingId, int lineNumber);
+    /** Path of a fragment's audio file. The file may not exist yet. */
+    Path audioFile(String voicingId, int fragmentNumber);
 
     List<Vote> votes(String voicingId);
 

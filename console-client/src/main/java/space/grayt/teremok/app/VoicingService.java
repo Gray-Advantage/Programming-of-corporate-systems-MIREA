@@ -8,14 +8,14 @@ import java.util.List;
 import space.grayt.teremok.audio.AudioRecorder;
 import space.grayt.teremok.audio.AudioUnavailableException;
 import space.grayt.teremok.audio.RecordingSession;
-import space.grayt.teremok.domain.Book;
-import space.grayt.teremok.domain.Line;
+import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.storage.AtomicTextFile;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Voicing lifecycle: draft, recording lines, publishing, deleting. */
+/** Voicing lifecycle: draft, recording fragments, publishing, deleting. */
 public final class VoicingService {
 
     private final VoicingRepository repository;
@@ -28,10 +28,10 @@ public final class VoicingService {
         this.clock = clock;
     }
 
-    public Voicing draftFor(Book book, String speakerId, String authorId) {
-        String id = Voicing.idOf(book.id(), speakerId, authorId);
+    public Voicing draftFor(TextWork textWork, String voicePartId, String authorId) {
+        String id = Voicing.idOf(textWork.id(), voicePartId, authorId);
         return repository.find(id).orElseGet(() -> {
-            Voicing draft = Voicing.newDraft(book.id(), speakerId, authorId, clock.instant());
+            Voicing draft = Voicing.newDraft(textWork.id(), voicePartId, authorId, clock.instant());
             repository.save(draft);
             return draft;
         });
@@ -41,33 +41,34 @@ public final class VoicingService {
         return repository.find(voicing.id()).orElse(voicing);
     }
 
-    /** Voicing progress without creating the voicing: zero for a speaker nobody has started. */
-    public int recordedCountFor(Book book, String speakerId, String authorId) {
-        return repository.find(Voicing.idOf(book.id(), speakerId, authorId))
-                .map(voicing -> recordedCount(voicing, book))
+    /** Voicing progress without creating it: zero for a voice part nobody has started. */
+    public int recordedCountFor(TextWork textWork, String voicePartId, String authorId) {
+        return repository.find(Voicing.idOf(textWork.id(), voicePartId, authorId))
+                .map(voicing -> recordedCount(voicing, textWork))
                 .orElse(0);
     }
 
-    public List<Line> missingLines(Voicing voicing, Book book) {
-        return book.linesOf(voicing.speakerId()).stream()
-                .filter(line -> !voicing.isRecorded(line.number()))
+    public List<TextWorkFragment> missingFragments(Voicing voicing, TextWork textWork) {
+        return textWork.fragmentsOf(voicing.voicePartId()).stream()
+                .filter(fragment -> !voicing.isRecorded(fragment.number()))
                 .toList();
     }
 
-    public int recordedCount(Voicing voicing, Book book) {
-        return book.linesOf(voicing.speakerId()).size() - missingLines(voicing, book).size();
+    public int recordedCount(Voicing voicing, TextWork textWork) {
+        return textWork.fragmentsOf(voicing.voicePartId()).size() - missingFragments(voicing, textWork).size();
     }
 
-    public boolean isComplete(Voicing voicing, Book book) {
-        return !book.linesOf(voicing.speakerId()).isEmpty() && missingLines(voicing, book).isEmpty();
+    public boolean isComplete(Voicing voicing, TextWork textWork) {
+        return !textWork.fragmentsOf(voicing.voicePartId()).isEmpty()
+                && missingFragments(voicing, textWork).isEmpty();
     }
 
-    public Path audioFile(Voicing voicing, int lineNumber) {
-        return repository.audioFile(voicing.id(), lineNumber);
+    public Path audioFile(Voicing voicing, int fragmentNumber) {
+        return repository.audioFile(voicing.id(), fragmentNumber);
     }
 
-    public RecordingSession startRecording(Voicing voicing, int lineNumber) {
-        Path target = repository.audioFile(voicing.id(), lineNumber);
+    public RecordingSession startRecording(Voicing voicing, int fragmentNumber) {
+        Path target = repository.audioFile(voicing.id(), fragmentNumber);
         Path dir = target.getParent();
         try {
             Files.createDirectories(dir);
@@ -78,10 +79,11 @@ public final class VoicingService {
         return recorder.start(target);
     }
 
-    public Voicing publish(Voicing voicing, Book book) {
-        if (!isComplete(voicing, book)) {
+    public Voicing publish(Voicing voicing, TextWork textWork) {
+        if (!isComplete(voicing, textWork)) {
             throw new IllegalStateException("Опубликовать можно только полностью записанную роль: записано "
-                    + recordedCount(voicing, book) + " из " + book.linesOf(voicing.speakerId()).size());
+                    + recordedCount(voicing, textWork) + " из "
+                    + textWork.fragmentsOf(voicing.voicePartId()).size());
         }
         Voicing published = voicing.withStatus(VoicingStatus.PUBLISHED);
         repository.save(published);

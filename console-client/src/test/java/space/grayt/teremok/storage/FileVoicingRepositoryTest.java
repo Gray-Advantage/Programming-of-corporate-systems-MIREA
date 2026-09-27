@@ -42,8 +42,8 @@ class FileVoicingRepositoryTest {
         repository.save(voicing);
         Voicing loaded = repository.find(voicing.id()).orElseThrow();
 
-        assertEquals("shapochka", loaded.bookId());
-        assertEquals("волк", loaded.speakerId());
+        assertEquals("shapochka", loaded.textWorkId());
+        assertEquals("волк", loaded.voicePartId());
         assertEquals("sergey", loaded.authorId());
         assertEquals(VoicingStatus.DRAFT, loaded.status());
         assertEquals(CREATED, loaded.createdAt());
@@ -60,14 +60,14 @@ class FileVoicingRepositoryTest {
 
         Voicing loaded = repository.find(voicing.id()).orElseThrow();
 
-        assertEquals(Set.of(2, 7), loaded.recordedLines());
+        assertEquals(Set.of(2, 7), loaded.recordedFragments());
     }
 
     @Test
     void audioFileNameHasFourDigits(@TempDir Path dir) {
         VoicingRepository repository = new FileVoicingRepository(dir);
 
-        assertEquals("line-0007.wav",
+        assertEquals("fragment-0007.wav",
                 repository.audioFile("shapochka__волк__sergey", 7).getFileName().toString());
     }
 
@@ -89,7 +89,7 @@ class FileVoicingRepositoryTest {
         repository.save(Voicing.newDraft("shapochka", "бабушка", "masha", CREATED));
         repository.save(Voicing.newDraft("teremok", "мышка", "masha", CREATED));
 
-        assertEquals(2, repository.findByBook("shapochka").size());
+        assertEquals(2, repository.findByTextWork("shapochka").size());
         assertEquals(2, repository.findByAuthor("masha").size());
     }
 
@@ -101,7 +101,7 @@ class FileVoicingRepositoryTest {
         Files.createDirectories(broken);
         Files.writeString(broken.resolve("meta.txt"), "совсем не то");
 
-        List<Voicing> found = repository.findByBook("shapochka");
+        List<Voicing> found = repository.findByTextWork("shapochka");
 
         assertEquals(1, found.size());
         assertFalse(repository.warnings().isEmpty());
@@ -115,8 +115,8 @@ class FileVoicingRepositoryTest {
         Files.createDirectories(broken);
         Files.writeString(broken.resolve("meta.txt"), "совсем не то");
 
-        repository.findByBook("shapochka");
-        repository.findByBook("shapochka");
+        repository.findByTextWork("shapochka");
+        repository.findByTextWork("shapochka");
 
         assertEquals(1, repository.warnings().size());
     }
@@ -172,7 +172,7 @@ class FileVoicingRepositoryTest {
 
         Path meta = dir.resolve("voicings").resolve(voicing.id()).resolve("meta.txt");
         List<String> keys = Files.readAllLines(meta).stream().map(line -> line.substring(0, line.indexOf('='))).toList();
-        assertEquals(List.of("book", "speaker", "author", "status", "created"), keys);
+        assertEquals(List.of("textWork", "voicePart", "author", "status", "created"), keys);
     }
 
     /** Spec §6: the file is absent when there are no votes, so no empty votes.txt may remain. */

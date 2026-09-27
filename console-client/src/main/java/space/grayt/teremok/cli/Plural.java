@@ -10,8 +10,8 @@ final class Plural {
     private Plural() {
     }
 
-    static String lines(int count) {
-        return of(count, "реплика", "реплики", "реплик");
+    static String fragments(int count) {
+        return of(count, "фрагмент", "фрагмента", "фрагментов");
     }
 
     static String of(int count, String one, String few, String many) {

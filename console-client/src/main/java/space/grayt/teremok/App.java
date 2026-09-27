@@ -13,7 +13,6 @@ import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioRecorder;
-import space.grayt.teremok.book.BookLibrary;
 import space.grayt.teremok.cli.Console;
 import space.grayt.teremok.cli.ListenFlow;
 import space.grayt.teremok.cli.MainMenu;
@@ -27,6 +26,8 @@ import space.grayt.teremok.storage.FileVoicingRepository;
 import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.storage.StorageException;
 import space.grayt.teremok.storage.VoicingRepository;
+import space.grayt.teremok.textwork.TextWorkCatalog;
+import space.grayt.teremok.textwork.TextWorkLibrary;
 
 /** Wires the dependencies and runs the outer application loop. */
 public final class App {
@@ -37,9 +38,15 @@ public final class App {
     private final AudioPlayer player;
     private final Clock clock;
     private final UnaryOperator<Duration> pauseTransform;
+    private final TextWorkCatalog textWorks;
 
     public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock) {
-        this(dataDir, console, recorder, player, clock, UnaryOperator.identity());
+        this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), new TextWorkLibrary());
+    }
+
+    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
+            TextWorkCatalog textWorks) {
+        this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), textWorks);
     }
 
     /**
@@ -48,12 +55,18 @@ public final class App {
      */
     public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
             UnaryOperator<Duration> pauseTransform) {
+        this(dataDir, console, recorder, player, clock, pauseTransform, new TextWorkLibrary());
+    }
+
+    App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
+            UnaryOperator<Duration> pauseTransform, TextWorkCatalog textWorks) {
         this.dataDir = dataDir;
         this.console = console;
         this.recorder = recorder;
         this.player = player;
         this.clock = clock;
         this.pauseTransform = pauseTransform;
+        this.textWorks = textWorks;
     }
 
     public void run() {
@@ -64,8 +77,7 @@ public final class App {
             return;
         }
 
-        BookLibrary books = new BookLibrary();
-        books.warnings().forEach(console::println);
+        textWorks.warnings().forEach(console::println);
 
         ProfileRepository profiles = new FileProfileRepository(dataDir);
         VoicingRepository voicings = new FileVoicingRepository(dataDir);
@@ -76,10 +88,10 @@ public final class App {
         PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, pauseTransform);
 
         ProfileScreen profileScreen = new ProfileScreen(console, profiles);
-        RecordFlow record = new RecordFlow(console, books, voicingService, player);
-        ListenFlow listen = new ListenFlow(console, books, castBuilder, voting, playback, playbackConsole, player,
+        RecordFlow record = new RecordFlow(console, textWorks, voicingService, player);
+        ListenFlow listen = new ListenFlow(console, textWorks, castBuilder, voting, playback, playbackConsole, player,
                 profiles);
-        MyVoicingsScreen mine = new MyVoicingsScreen(console, books, voicingService, voting, castBuilder,
+        MyVoicingsScreen mine = new MyVoicingsScreen(console, textWorks, voicingService, voting, castBuilder,
                 playback, playbackConsole, record);
         MainMenu menu = new MainMenu(console, listen, record, mine, voicings);
 

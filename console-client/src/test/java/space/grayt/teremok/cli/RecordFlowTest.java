@@ -16,7 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
-import space.grayt.teremok.book.BookLibrary;
+import space.grayt.teremok.textwork.TextWorkLibrary;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.storage.FileVoicingRepository;
@@ -43,20 +43,20 @@ class RecordFlowTest {
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
         VoicingService voicings = new VoicingService(repository, recorder,
                 Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
-        new RecordFlow(console, new BookLibrary(), voicings, player).run(SERGEY);
+        new RecordFlow(console, new TextWorkLibrary(), voicings, player).run(SERGEY);
     }
 
     private String printed() {
         return out.toString(UTF_8);
     }
 
-    /** Book 1 is Little Red Riding Hood, speaker 2 is Mother with a single line. */
+    /** TextWork 1 is Little Red Riding Hood, speaker 2 is Mother with a single line. */
     @Test
     void recordsLineAndSavesDraft() {
         run("1\n2\n\n\n3\n0\n0\n");
 
         Voicing voicing = repository.find(Voicing.idOf("shapochka", "мама", "sergey")).orElseThrow();
-        assertEquals(1, voicing.recordedLines().size());
+        assertEquals(1, voicing.recordedFragments().size());
         assertEquals(1, recorder.recorded().size());
     }
 
@@ -118,7 +118,7 @@ class RecordFlowTest {
     void reportsWhenAllLinesAreRecorded() {
         run("1\n2\n\n\n3\n0\n2\n0\n0\n");
 
-        assertTrue(printed().contains("Все реплики записаны"));
+        assertTrue(printed().contains("Все фрагменты записаны"));
     }
 
     @Test
@@ -126,9 +126,9 @@ class RecordFlowTest {
         run("1\n0\n0\n");
 
         String printed = printed();
-        assertTrue(printed.contains("Красная Шапочка — 21 реплика"), () -> printed);
-        assertTrue(printed.contains("Колобок — 18 реплик"), () -> printed);
-        assertTrue(printed.contains("Мама — 1 реплика,"), () -> printed);
-        assertTrue(printed.contains("Бабушка — 2 реплики,"), () -> printed);
+        assertTrue(printed.contains("Красная Шапочка — 21 фрагмент"), () -> printed);
+        assertTrue(printed.contains("Колобок — 18 фрагментов"), () -> printed);
+        assertTrue(printed.contains("Мама — 1 фрагмент,"), () -> printed);
+        assertTrue(printed.contains("Бабушка — 2 фрагмента,"), () -> printed);
     }
 }

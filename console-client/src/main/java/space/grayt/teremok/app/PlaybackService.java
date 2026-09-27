@@ -8,14 +8,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import space.grayt.teremok.domain.Book;
 import space.grayt.teremok.domain.Cast;
-import space.grayt.teremok.domain.Line;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Voicing;
+import space.grayt.teremok.domain.VoicePart;
 import space.grayt.teremok.storage.VoicingRepository;
 
-/** Turns a book and a cast into playback steps: audio where it exists, text elsewhere. */
+/** Turns a text work and a cast into playback steps: audio where it exists, text elsewhere. */
 public final class PlaybackService {
 
     private final VoicingRepository repository;
@@ -24,16 +24,18 @@ public final class PlaybackService {
         this.repository = repository;
     }
 
-    public List<PlaybackStep> plan(Book book, Cast cast) {
-        List<PlaybackStep> steps = new ArrayList<>(book.lines().size());
-        for (Line line : book.lines()) {
-            String speakerName = book.speaker(line.speakerId()).map(Speaker::name).orElse(line.speakerId());
-            Optional<Voicing> voicing = cast.voicingFor(line.speakerId()).flatMap(repository::find);
+    public List<PlaybackStep> plan(TextWork textWork, Cast cast) {
+        List<PlaybackStep> steps = new ArrayList<>(textWork.fragments().size());
+        for (TextWorkFragment fragment : textWork.fragments()) {
+            String voicePartName = textWork.voicePart(fragment.voicePartId())
+                    .map(VoicePart::name)
+                    .orElse(fragment.voicePartId());
+            Optional<Voicing> voicing = cast.voicingFor(fragment.voicePartId()).flatMap(repository::find);
             Path audio = voicing
-                    .map(found -> repository.audioFile(found.id(), line.number()))
+                    .map(found -> repository.audioFile(found.id(), fragment.number()))
                     .filter(PlaybackService::isPlayable)
                     .orElse(null);
-            steps.add(new PlaybackStep(line, speakerName,
+            steps.add(new PlaybackStep(fragment, voicePartName,
                     audio == null ? null : voicing.map(Voicing::authorId).orElse(null), audio));
         }
         return steps;
@@ -48,17 +50,17 @@ public final class PlaybackService {
         }
     }
 
-    /** Pause long enough to read an unvoiced line. */
+    /** Pause long enough to read an unvoiced fragment. */
     public static Duration readingPause(String text) {
         long millis = Math.max(1200L, 60L * text.length());
         return Duration.ofMillis(Math.min(millis, 8000L));
     }
 
-    /** First recorded line of a voicing, used by the play-sample command. */
+    /** First recorded fragment of a voicing, used by the play-sample command. */
     public Optional<Path> sample(Voicing voicing) {
-        return voicing.recordedLines().stream()
+        return voicing.recordedFragments().stream()
                 .min(Comparator.naturalOrder())
-                .map(lineNumber -> repository.audioFile(voicing.id(), lineNumber))
+                .map(fragmentNumber -> repository.audioFile(voicing.id(), fragmentNumber))
                 .filter(PlaybackService::isPlayable);
     }
 }

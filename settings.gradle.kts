@@ -5,5 +5,6 @@ include(
     "backend:text-work-content-service",
     "backend:text-work-deployer",
     "backend:backend-shared:kafka-events",
+    "backend-client-shared",
     "console-client"
 )

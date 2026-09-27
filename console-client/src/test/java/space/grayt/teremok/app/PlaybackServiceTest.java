@@ -9,10 +9,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.book.BookParser;
-import space.grayt.teremok.domain.Book;
+import space.grayt.teremok.textwork.TextWorkParser;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Cast;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.VoicePart;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.storage.FileVoicingRepository;
@@ -20,15 +20,15 @@ import space.grayt.teremok.storage.VoicingRepository;
 
 class PlaybackServiceTest {
 
-    private static final Book BOOK = BookParser.parse("shapochka", """
+    private static final TextWork BOOK = TextWorkParser.parse("shapochka", """
             title: Красная Шапочка
             ---
             Волк: Куда ты идёшь?
             Шапочка: К бабушке.
             Волк: А где живёт бабушка?
             """);
-    private static final String WOLF = Speaker.idOf("Волк");
-    private static final String HOOD = Speaker.idOf("Шапочка");
+    private static final String WOLF = VoicePart.idOf("Волк");
+    private static final String HOOD = VoicePart.idOf("Шапочка");
 
     private VoicingRepository repository;
     private PlaybackService playback;
@@ -72,9 +72,9 @@ class PlaybackServiceTest {
 
         List<PlaybackStep> steps = playback.plan(BOOK, cast);
 
-        assertEquals(List.of(1, 2, 3), steps.stream().map(step -> step.line().number()).toList());
+        assertEquals(List.of(1, 2, 3), steps.stream().map(step -> step.fragment().number()).toList());
         assertEquals(List.of("Волк", "Шапочка", "Волк"),
-                steps.stream().map(PlaybackStep::speakerName).toList());
+                steps.stream().map(PlaybackStep::voicePartName).toList());
     }
 
     @Test

@@ -19,12 +19,12 @@ import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.Vote;
 import space.grayt.teremok.domain.VoteKind;
 
-/** Each voicing is its own directory data/voicings/<id> with meta.txt, votes.txt and line files. */
+/** Each voicing is its own directory data/voicings/<id> with metadata, votes and fragment audio. */
 public final class FileVoicingRepository implements VoicingRepository {
 
     private static final String META = "meta.txt";
     private static final String VOTES = "votes.txt";
-    private static final String AUDIO_PREFIX = "line-";
+    private static final String AUDIO_PREFIX = "fragment-";
     private static final String AUDIO_SUFFIX = ".wav";
 
     private final Path root;
@@ -46,12 +46,12 @@ public final class FileVoicingRepository implements VoicingRepository {
         try {
             Voicing voicing = new Voicing(
                     voicingId,
-                    required(meta, "book", voicingId),
-                    required(meta, "speaker", voicingId),
+                    required(meta, "textWork", voicingId),
+                    required(meta, "voicePart", voicingId),
                     required(meta, "author", voicingId),
                     VoicingStatus.valueOf(required(meta, "status", voicingId)),
                     Instant.parse(required(meta, "created", voicingId)),
-                    recordedLines(dir));
+                    recordedFragments(dir));
             return Optional.of(voicing);
         } catch (IllegalArgumentException | DateTimeParseException e) {
             warnings.add("Роль " + voicingId + " пропущена: " + e.getMessage());
@@ -60,8 +60,8 @@ public final class FileVoicingRepository implements VoicingRepository {
     }
 
     @Override
-    public List<Voicing> findByBook(String bookId) {
-        return all().filter(voicing -> voicing.bookId().equals(bookId)).toList();
+    public List<Voicing> findByTextWork(String textWorkId) {
+        return all().filter(voicing -> voicing.textWorkId().equals(textWorkId)).toList();
     }
 
     @Override
@@ -74,8 +74,8 @@ public final class FileVoicingRepository implements VoicingRepository {
         // LinkedHashMap with a fixed insertion order: spec §6 defines the order of
         // meta.txt lines, while Map.of() would shuffle them from run to run.
         Map<String, String> meta = new LinkedHashMap<>();
-        meta.put("book", voicing.bookId());
-        meta.put("speaker", voicing.speakerId());
+        meta.put("textWork", voicing.textWorkId());
+        meta.put("voicePart", voicing.voicePartId());
         meta.put("author", voicing.authorId());
         meta.put("status", voicing.status().name());
         meta.put("created", voicing.createdAt().toString());
@@ -98,8 +98,8 @@ public final class FileVoicingRepository implements VoicingRepository {
     }
 
     @Override
-    public Path audioFile(String voicingId, int lineNumber) {
-        return root.resolve(voicingId).resolve(String.format(AUDIO_PREFIX + "%04d" + AUDIO_SUFFIX, lineNumber));
+    public Path audioFile(String voicingId, int fragmentNumber) {
+        return root.resolve(voicingId).resolve(String.format(AUDIO_PREFIX + "%04d" + AUDIO_SUFFIX, fragmentNumber));
     }
 
     @Override
@@ -174,8 +174,8 @@ public final class FileVoicingRepository implements VoicingRepository {
         return value;
     }
 
-    /** A line counts as recorded only if its file exists and is not empty. */
-    private static Set<Integer> recordedLines(Path dir) {
+    /** A fragment counts as recorded only if its file exists and is not empty. */
+    private static Set<Integer> recordedFragments(Path dir) {
         Set<Integer> numbers = new LinkedHashSet<>();
         try (Stream<Path> files = Files.list(dir)) {
             for (Path file : files.sorted().toList()) {

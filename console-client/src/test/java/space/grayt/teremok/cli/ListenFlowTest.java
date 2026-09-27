@@ -16,7 +16,7 @@ import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.FakeAudioPlayer;
-import space.grayt.teremok.book.BookLibrary;
+import space.grayt.teremok.textwork.TextWorkLibrary;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.Voicing;
@@ -29,7 +29,7 @@ import space.grayt.teremok.storage.VoicingRepository;
 class ListenFlowTest {
 
     private static final Profile MASHA = new Profile("masha", "Маша");
-    private static final BookLibrary BOOKS = new BookLibrary();
+    private static final TextWorkLibrary BOOKS = new TextWorkLibrary();
 
     private VoicingRepository repository;
     private ProfileRepository profiles;
@@ -101,7 +101,7 @@ class ListenFlowTest {
         run("1\ns\n");
 
         assertEquals(1, player.played().size());
-        assertTrue(printed().contains("Книга закончилась"));
+        assertTrue(printed().contains("Произведение закончилось"));
     }
 
     @Test
@@ -187,8 +187,8 @@ class ListenFlowTest {
         run("1\nn\n2\nl 1\n0\n0\n");
 
         String printed = printed();
-        assertTrue(printed.contains("Красная Шапочка — 21 реплика"), () -> printed);
-        assertTrue(printed.contains("Мама — 1 реплика"), () -> printed);
+        assertTrue(printed.contains("Красная Шапочка — 21 фрагмент"), () -> printed);
+        assertTrue(printed.contains("Мама — 1 фрагмент"), () -> printed);
         assertTrue(printed.contains("0 лайков, 0 дизлайков"), () -> printed);
         assertTrue(printed.contains("1 лайк, 0 дизлайков"), () -> printed);
     }

@@ -7,51 +7,53 @@ import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
 import space.grayt.teremok.audio.RecordingSession;
-import space.grayt.teremok.book.BookLibrary;
-import space.grayt.teremok.domain.Book;
-import space.grayt.teremok.domain.Line;
 import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Voicing;
+import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.textwork.TextWorkCatalog;
 
-/** Voicing a speaker line by line, saving each line immediately. */
+/** Voicing a voice part fragment by fragment, saving each recording immediately. */
 public final class RecordFlow {
 
     private final Console console;
-    private final BookLibrary books;
+    private final TextWorkCatalog textWorks;
     private final VoicingService voicings;
     private final AudioPlayer player;
 
-    public RecordFlow(Console console, BookLibrary books, VoicingService voicings, AudioPlayer player) {
+    public RecordFlow(Console console, TextWorkCatalog textWorks, VoicingService voicings, AudioPlayer player) {
         this.console = console;
-        this.books = books;
+        this.textWorks = textWorks;
         this.voicings = voicings;
         this.player = player;
     }
 
     public void run(Profile profile) {
-        Optional<Book> book = chooseBook();
-        if (book.isEmpty()) {
+        Optional<TextWork> textWork = chooseTextWork();
+        if (textWork.isEmpty()) {
             return;
         }
         while (true) {
-            Optional<Speaker> speaker = chooseSpeaker(book.get(), profile);
-            if (speaker.isEmpty()) {
+            Optional<VoicePart> voicePart = chooseVoicePart(textWork.get(), profile);
+            if (voicePart.isEmpty()) {
                 return;
             }
-            recordRole(book.get(), voicings.draftFor(book.get(), speaker.get().id(), profile.id()));
+            recordRole(
+                    textWork.get(),
+                    voicings.draftFor(textWork.get(), voicePart.get().id(), profile.id()));
         }
     }
 
     /** Records a specific voicing. Returns when the user leaves. */
-    public void recordRole(Book book, Voicing voicing) {
+    public void recordRole(TextWork textWork, Voicing voicing) {
         Voicing current = voicings.reload(voicing);
         while (true) {
-            List<Line> missing = voicings.missingLines(current, book);
-            Line target;
+            List<TextWorkFragment> missing = voicings.missingFragments(current, textWork);
+            TextWorkFragment target;
             if (missing.isEmpty()) {
-                console.println("Все реплики записаны. Роль можно опубликовать в «Моих озвучках».");
-                Optional<Line> chosen = chooseLine(book, current);
+                console.println("Все фрагменты записаны. Роль можно опубликовать в «Моих озвучках».");
+                Optional<TextWorkFragment> chosen = chooseFragment(textWork, current);
                 if (chosen.isEmpty()) {
                     return;
                 }
@@ -59,7 +61,7 @@ public final class RecordFlow {
             } else {
                 target = missing.get(0);
             }
-            Optional<Voicing> next = recordLine(book, current, target);
+            Optional<Voicing> next = recordFragment(textWork, current, target);
             if (next.isEmpty()) {
                 return;
             }
@@ -73,46 +75,52 @@ public final class RecordFlow {
     }
 
     /** An empty result means the user left recording. */
-    private Optional<Voicing> recordLine(Book book, Voicing voicing, Line startLine) {
-        Line line = startLine;
+    private Optional<Voicing> recordFragment(
+            TextWork textWork,
+            Voicing voicing,
+            TextWorkFragment startFragment) {
+        TextWorkFragment fragment = startFragment;
         while (true) {
-            List<Line> all = book.linesOf(voicing.speakerId());
-            String speakerName = book.speaker(voicing.speakerId()).map(Speaker::name).orElse(voicing.speakerId());
+            List<TextWorkFragment> all = textWork.fragmentsOf(voicing.voicePartId());
+            String voicePartName = textWork.voicePart(voicing.voicePartId())
+                    .map(VoicePart::name)
+                    .orElse(voicing.voicePartId());
 
             console.println();
-            console.println(speakerName + " — реплика " + (all.indexOf(line) + 1) + " из " + all.size());
+            console.println(voicePartName + " — фрагмент "
+                    + (all.indexOf(fragment) + 1) + " из " + all.size());
             console.println();
-            console.println("  " + line.text());
+            console.println("  " + fragment.text());
             console.println();
 
-            String command = console.ask("Enter — начать запись, s — список реплик, 0 — выйти: ");
+            String command = console.ask("Enter — начать запись, s — список фрагментов, 0 — выйти: ");
             if (command.equals("0")) {
                 return Optional.empty();
             }
             if (command.equals("s")) {
-                Optional<Line> chosen = chooseLine(book, voicings.reload(voicing));
+                Optional<TextWorkFragment> chosen = chooseFragment(textWork, voicings.reload(voicing));
                 if (chosen.isEmpty()) {
                     return Optional.empty();
                 }
-                line = chosen.get();
+                fragment = chosen.get();
                 continue;
             }
-            if (!record(voicing, line)) {
+            if (!record(voicing, fragment)) {
                 return Optional.empty();
             }
-            if (afterRecording(voicing, line) == AfterRecording.EXIT) {
+            if (afterRecording(voicing, fragment) == AfterRecording.EXIT) {
                 return Optional.empty();
             }
             return Optional.of(voicings.reload(voicing));
         }
     }
 
-    private AfterRecording afterRecording(Voicing voicing, Line line) {
+    private AfterRecording afterRecording(Voicing voicing, TextWorkFragment fragment) {
         while (true) {
             switch (console.ask("1 прослушать, 2 перезаписать, 3 дальше, 0 выйти: ")) {
-                case "1" -> playRecorded(voicing, line);
+                case "1" -> playRecorded(voicing, fragment);
                 case "2" -> {
-                    if (!record(voicing, line)) {
+                    if (!record(voicing, fragment)) {
                         return AfterRecording.EXIT;
                     }
                 }
@@ -127,25 +135,25 @@ public final class RecordFlow {
         }
     }
 
-    /** All lines of the speaker with marks; this is where an already recorded line gets re-recorded. */
-    private Optional<Line> chooseLine(Book book, Voicing voicing) {
-        List<Line> all = book.linesOf(voicing.speakerId());
+    /** All fragments of the voice part with marks; a recorded fragment can be re-recorded here. */
+    private Optional<TextWorkFragment> chooseFragment(TextWork textWork, Voicing voicing) {
+        List<TextWorkFragment> all = textWork.fragmentsOf(voicing.voicePartId());
         console.println();
-        console.println("Реплики персонажа:");
+        console.println("Фрагменты роли:");
         console.println();
         for (int i = 0; i < all.size(); i++) {
-            Line line = all.get(i);
-            String mark = voicing.isRecorded(line.number()) ? "готово" : "пусто ";
-            console.println("  " + (i + 1) + "  [" + mark + "] " + line.text());
+            TextWorkFragment fragment = all.get(i);
+            String mark = voicing.isRecorded(fragment.number()) ? "готово" : "пусто ";
+            console.println("  " + (i + 1) + "  [" + mark + "] " + fragment.text());
         }
         console.println("  0  Назад");
         return pick(all);
     }
 
     /** false means recording failed and the voicing screen should close. */
-    private boolean record(Voicing voicing, Line line) {
+    private boolean record(Voicing voicing, TextWorkFragment fragment) {
         try {
-            RecordingSession session = voicings.startRecording(voicing, line.number());
+            RecordingSession session = voicings.startRecording(voicing, fragment.number());
             console.println("● запись идёт, максимум 2 минуты");
             console.ask("Enter — стоп: ");
             boolean stoppedByLimit = !session.isRecording();
@@ -160,45 +168,47 @@ public final class RecordFlow {
         }
     }
 
-    private void playRecorded(Voicing voicing, Line line) {
+    private void playRecorded(Voicing voicing, TextWorkFragment fragment) {
         try {
-            player.play(voicings.audioFile(voicing, line.number()));
+            player.play(voicings.audioFile(voicing, fragment.number()));
         } catch (AudioUnavailableException e) {
             console.println(e.getMessage());
         }
     }
 
-    private Optional<Book> chooseBook() {
-        List<Book> all = books.all();
+    private Optional<TextWork> chooseTextWork() {
+        List<TextWork> all = textWorks.all();
         if (all.isEmpty()) {
-            console.println("Нет ни одной книги.");
+            console.println("Нет ни одного произведения.");
             return Optional.empty();
         }
         console.println();
-        console.println("Какую книгу озвучиваем?");
+        console.println("Какое произведение озвучиваем?");
         console.println();
         for (int i = 0; i < all.size(); i++) {
-            Book book = all.get(i);
-            console.println("  " + (i + 1) + "  " + book.title() + " — " + Plural.lines(book.lines().size()));
+            TextWork textWork = all.get(i);
+            console.println("  " + (i + 1) + "  " + textWork.title() + " — "
+                    + Plural.fragments(textWork.fragments().size()));
         }
         console.println("  0  Назад");
         return pick(all);
     }
 
-    private Optional<Speaker> chooseSpeaker(Book book, Profile profile) {
-        List<Speaker> speakers = book.speakers();
+    private Optional<VoicePart> chooseVoicePart(TextWork textWork, Profile profile) {
+        List<VoicePart> voiceParts = textWork.voiceParts();
         console.println();
-        console.println(book.title() + " — кого озвучиваем?");
+        console.println(textWork.title() + " — какую роль озвучиваем?");
         console.println();
-        for (int i = 0; i < speakers.size(); i++) {
-            Speaker speaker = speakers.get(i);
-            int recorded = voicings.recordedCountFor(book, speaker.id(), profile.id());
-            int total = book.linesOf(speaker.id()).size();
+        for (int i = 0; i < voiceParts.size(); i++) {
+            VoicePart voicePart = voiceParts.get(i);
+            int recorded = voicings.recordedCountFor(textWork, voicePart.id(), profile.id());
+            int total = textWork.fragmentsOf(voicePart.id()).size();
             String progress = recorded == 0 ? "не начато" : recorded + "/" + total;
-            console.println("  " + (i + 1) + "  " + speaker.name() + " — " + Plural.lines(total) + ", " + progress);
+            console.println("  " + (i + 1) + "  " + voicePart.name() + " — "
+                    + Plural.fragments(total) + ", " + progress);
         }
         console.println("  0  Назад");
-        return pick(speakers);
+        return pick(voiceParts);
     }
 
     private <T> Optional<T> pick(List<T> items) {

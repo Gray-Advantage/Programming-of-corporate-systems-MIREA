@@ -7,10 +7,10 @@ import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.book.BookParser;
-import space.grayt.teremok.domain.Book;
+import space.grayt.teremok.textwork.TextWorkParser;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Cast;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.VoicePart;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.VoteKind;
@@ -19,7 +19,7 @@ import space.grayt.teremok.storage.VoicingRepository;
 
 class CastBuilderTest {
 
-    private static final Book BOOK = BookParser.parse("shapochka", """
+    private static final TextWork BOOK = TextWorkParser.parse("shapochka", """
             title: Красная Шапочка
             ---
             Волк: Куда ты идёшь?
@@ -47,31 +47,31 @@ class CastBuilderTest {
 
     @Test
     void eachSpeakerGetsTheBestVoicing() {
-        publish(Speaker.idOf("Волк"), "weak", 1);
-        Voicing top = publish(Speaker.idOf("Волк"), "strong", 9);
-        Voicing hood = publish(Speaker.idOf("Шапочка"), "masha", 0);
+        publish(VoicePart.idOf("Волк"), "weak", 1);
+        Voicing top = publish(VoicePart.idOf("Волк"), "strong", 9);
+        Voicing hood = publish(VoicePart.idOf("Шапочка"), "masha", 0);
 
         Cast cast = builder.best(BOOK);
 
-        assertEquals(top.id(), cast.voicingFor(Speaker.idOf("Волк")).orElseThrow());
-        assertEquals(hood.id(), cast.voicingFor(Speaker.idOf("Шапочка")).orElseThrow());
+        assertEquals(top.id(), cast.voicingFor(VoicePart.idOf("Волк")).orElseThrow());
+        assertEquals(hood.id(), cast.voicingFor(VoicePart.idOf("Шапочка")).orElseThrow());
     }
 
     @Test
     void speakerWithoutVoicingsStaysUnvoiced() {
-        publish(Speaker.idOf("Волк"), "sergey", 1);
+        publish(VoicePart.idOf("Волк"), "sergey", 1);
 
         Cast cast = builder.best(BOOK);
 
-        assertTrue(cast.voicingFor(Speaker.idOf("Шапочка")).isEmpty());
+        assertTrue(cast.voicingFor(VoicePart.idOf("Шапочка")).isEmpty());
     }
 
     @Test
     void draftsAreNotCast() {
-        repository.save(Voicing.newDraft("shapochka", Speaker.idOf("Волк"), "sergey",
+        repository.save(Voicing.newDraft("shapochka", VoicePart.idOf("Волк"), "sergey",
                 Instant.parse("2026-09-01T10:00:00Z")));
 
-        assertTrue(builder.best(BOOK).voicingFor(Speaker.idOf("Волк")).isEmpty());
+        assertTrue(builder.best(BOOK).voicingFor(VoicePart.idOf("Волк")).isEmpty());
     }
 
     @Test

@@ -20,7 +20,7 @@ import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
-import space.grayt.teremok.book.BookLibrary;
+import space.grayt.teremok.textwork.TextWorkLibrary;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.storage.FileProfileRepository;
 import space.grayt.teremok.storage.FileVoicingRepository;
@@ -52,7 +52,7 @@ class MainMenuTest {
     private static String run(Path dir, String input) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
-        BookLibrary books = new BookLibrary();
+        TextWorkLibrary books = new TextWorkLibrary();
         FakeAudioPlayer player = new FakeAudioPlayer();
         VoicingRepository repository = new FileVoicingRepository(dir);
         ProfileRepository profiles = new FileProfileRepository(dir);

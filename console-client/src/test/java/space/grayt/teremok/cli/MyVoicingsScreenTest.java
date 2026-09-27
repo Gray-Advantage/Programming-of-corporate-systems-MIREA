@@ -21,8 +21,8 @@ import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
-import space.grayt.teremok.book.BookLibrary;
-import space.grayt.teremok.domain.Line;
+import space.grayt.teremok.textwork.TextWorkLibrary;
+import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Profile;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
@@ -34,7 +34,7 @@ import space.grayt.teremok.storage.VoicingRepository;
 class MyVoicingsScreenTest {
 
     private static final Profile SERGEY = new Profile("sergey", "Сергей");
-    private static final BookLibrary BOOKS = new BookLibrary();
+    private static final TextWorkLibrary BOOKS = new TextWorkLibrary();
     private static final String MAMA_ID = Voicing.idOf("shapochka", "мама", "sergey");
 
     private VoicingRepository repository;
@@ -158,8 +158,8 @@ class MyVoicingsScreenTest {
     private Voicing draft(String speakerId, int recorded) throws Exception {
         Voicing voicing = Voicing.newDraft("shapochka", speakerId, "sergey", Instant.parse("2026-09-01T10:00:00Z"));
         repository.save(voicing);
-        List<Line> lines = BOOKS.find("shapochka").orElseThrow().linesOf(speakerId);
-        for (Line line : lines.subList(0, recorded)) {
+        List<TextWorkFragment> lines = BOOKS.find("shapochka").orElseThrow().fragmentsOf(speakerId);
+        for (TextWorkFragment line : lines.subList(0, recorded)) {
             Path file = repository.audioFile(voicing.id(), line.number());
             Files.createDirectories(file.getParent());
             Files.writeString(file, "звук");

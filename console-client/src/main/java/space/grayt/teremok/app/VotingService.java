@@ -24,10 +24,10 @@ public final class VotingService {
         return new RatedVoicing(voicing, likes, votes.size() - likes);
     }
 
-    /** Published voicings of a speaker, best first. */
-    public List<RatedVoicing> ranked(String bookId, String speakerId) {
-        return repository.findByBook(bookId).stream()
-                .filter(voicing -> voicing.speakerId().equals(speakerId))
+    /** Published voicings of a voice part, best first. */
+    public List<RatedVoicing> ranked(String textWorkId, String voicePartId) {
+        return repository.findByTextWork(textWorkId).stream()
+                .filter(voicing -> voicing.voicePartId().equals(voicePartId))
                 .filter(voicing -> voicing.status() == VoicingStatus.PUBLISHED)
                 .map(this::rate)
                 .sorted(RatedVoicing.BEST_FIRST)

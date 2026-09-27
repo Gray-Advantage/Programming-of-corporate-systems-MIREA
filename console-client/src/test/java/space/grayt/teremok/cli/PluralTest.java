@@ -8,33 +8,33 @@ class PluralTest {
 
     @Test
     void oneAndNumbersEndingInOne() {
-        assertEquals("1 реплика", Plural.lines(1));
-        assertEquals("21 реплика", Plural.lines(21));
-        assertEquals("101 реплика", Plural.lines(101));
+        assertEquals("1 фрагмент", Plural.fragments(1));
+        assertEquals("21 фрагмент", Plural.fragments(21));
+        assertEquals("101 фрагмент", Plural.fragments(101));
     }
 
     @Test
     void numbersEndingInTwoThreeFour() {
-        assertEquals("2 реплики", Plural.lines(2));
-        assertEquals("4 реплики", Plural.lines(4));
-        assertEquals("22 реплики", Plural.lines(22));
+        assertEquals("2 фрагмента", Plural.fragments(2));
+        assertEquals("4 фрагмента", Plural.fragments(4));
+        assertEquals("22 фрагмента", Plural.fragments(22));
     }
 
     @Test
     void zeroAndNumbersFromFiveUp() {
-        assertEquals("0 реплик", Plural.lines(0));
-        assertEquals("5 реплик", Plural.lines(5));
-        assertEquals("18 реплик", Plural.lines(18));
-        assertEquals("9999 реплик", Plural.lines(9999));
+        assertEquals("0 фрагментов", Plural.fragments(0));
+        assertEquals("5 фрагментов", Plural.fragments(5));
+        assertEquals("18 фрагментов", Plural.fragments(18));
+        assertEquals("9999 фрагментов", Plural.fragments(9999));
     }
 
     @Test
     void elevenToFourteenUseManyForm() {
-        assertEquals("11 реплик", Plural.lines(11));
-        assertEquals("12 реплик", Plural.lines(12));
-        assertEquals("14 реплик", Plural.lines(14));
-        assertEquals("111 реплик", Plural.lines(111));
-        assertEquals("112 реплик", Plural.lines(112));
+        assertEquals("11 фрагментов", Plural.fragments(11));
+        assertEquals("12 фрагментов", Plural.fragments(12));
+        assertEquals("14 фрагментов", Plural.fragments(14));
+        assertEquals("111 фрагментов", Plural.fragments(111));
+        assertEquals("112 фрагментов", Plural.fragments(112));
     }
 
     @Test

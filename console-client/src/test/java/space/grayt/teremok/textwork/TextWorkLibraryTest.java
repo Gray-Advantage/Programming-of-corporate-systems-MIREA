@@ -1,14 +1,14 @@
-package space.grayt.teremok.book;
+package space.grayt.teremok.textwork;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import space.grayt.teremok.domain.Book;
+import space.grayt.teremok.domain.TextWork;
 
-class BookLibraryTest {
+class TextWorkLibraryTest {
 
-    private final BookLibrary library = new BookLibrary();
+    private final TextWorkLibrary library = new TextWorkLibrary();
 
     @Test
     void loadsAllBundledBooks() {
@@ -18,10 +18,10 @@ class BookLibraryTest {
 
     @Test
     void everyBookHasTitleLinesAndSpeakers() {
-        for (Book book : library.all()) {
+        for (TextWork book : library.all()) {
             assertFalse(book.title().isBlank());
-            assertFalse(book.lines().isEmpty());
-            assertTrue(book.speakers().size() >= 2, book.id());
+            assertFalse(book.fragments().isEmpty());
+            assertTrue(book.voiceParts().size() >= 2, book.id());
         }
     }
 
@@ -37,15 +37,15 @@ class BookLibraryTest {
 
     @Test
     void lineNumbersAreSequentialFromOne() {
-        Book book = library.find("kolobok").orElseThrow();
+        TextWork book = library.find("kolobok").orElseThrow();
 
-        assertEquals(1, book.lines().get(0).number());
-        assertEquals(book.lines().size(), book.lines().get(book.lines().size() - 1).number());
+        assertEquals(1, book.fragments().get(0).number());
+        assertEquals(book.fragments().size(), book.fragments().get(book.fragments().size() - 1).number());
     }
 
     @Test
     void bookIdsAreUnique() {
-        List<String> ids = library.all().stream().map(Book::id).toList();
+        List<String> ids = library.all().stream().map(TextWork::id).toList();
 
         assertEquals(ids.size(), ids.stream().distinct().count());
     }

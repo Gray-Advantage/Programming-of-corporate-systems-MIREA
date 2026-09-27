@@ -7,7 +7,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -15,6 +20,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import space.grayt.teremok.events.TextWorkAddedEvent;
 import space.grayt.teremok.events.TextWorkAddedEvent.OriginType;
+import space.grayt.teremok.events.TextWorkAddedEvent.SegmentType;
+import space.grayt.teremok.events.TextWorkAddedEvent.TextWorkPayload;
 import tools.jackson.databind.json.JsonMapper;
 
 public final class TextWorkDeployerApplication {
@@ -91,28 +98,120 @@ public final class TextWorkDeployerApplication {
     }
 
     private static void validate(TextWorkAddedEvent event) {
+        require(event != null, "событие обязательно");
         require(event.eventId() != null, "eventId обязателен");
         require(event.eventVersion() == 1, "поддерживается только eventVersion=1");
         require(event.occurredAt() != null, "occurredAt обязателен");
         require(event.textWork() != null, "textWork обязателен");
-        require(event.textWork().id() != null, "textWork.id обязателен");
-        require(notBlank(event.textWork().name()), "textWork.name обязателен");
-        require(event.textWork().authors() != null && !event.textWork().authors().isEmpty(),
-                "textWork.authors не должен быть пустым");
-        require(notBlank(event.textWork().language()), "textWork.language обязателен");
-        require(event.textWork().origin() != null && event.textWork().origin().type() != null,
-                "textWork.origin.type обязателен");
-        require(event.textWork().segmentType() != null, "textWork.segmentType обязателен");
-        require(event.textWork().segments() != null, "textWork.segments обязателен");
-        require(event.textWork().voiceParts() != null, "textWork.voiceParts обязателен");
 
-        if (event.textWork().origin().type() == OriginType.TRANSLATION) {
-            require(notBlank(event.textWork().origin().translatedFrom()),
+        TextWorkPayload textWork = event.textWork();
+        require(textWork.id() != null, "textWork.id обязателен");
+        require(notBlank(textWork.name()), "textWork.name обязателен");
+        require(textWork.authors() != null && !textWork.authors().isEmpty(),
+                "textWork.authors не должен быть пустым");
+        require(textWork.authors().stream().allMatch(TextWorkDeployerApplication::notBlank),
+                "textWork.authors не должен содержать пустые имена");
+        require(notBlank(textWork.language()), "textWork.language обязателен");
+        require(textWork.origin() != null && textWork.origin().type() != null,
+                "textWork.origin.type обязателен");
+        require(textWork.segmentType() != null, "textWork.segmentType обязателен");
+        require(textWork.segments() != null && !textWork.segments().isEmpty(),
+                "textWork.segments не должен быть пустым");
+        require(textWork.voiceParts() != null && !textWork.voiceParts().isEmpty(),
+                "textWork.voiceParts не должен быть пустым");
+
+        validateOrigin(textWork);
+        validateStructure(event.eventId(), textWork);
+    }
+
+    private static void validateOrigin(TextWorkPayload textWork) {
+        var origin = textWork.origin();
+        require(origin.translators() != null, "textWork.origin.translators обязателен");
+        require(origin.translators().stream().allMatch(TextWorkDeployerApplication::notBlank),
+                "textWork.origin.translators не должен содержать пустые имена");
+
+        if (origin.type() == OriginType.TRANSLATION) {
+            require(notBlank(origin.translatedFrom()),
                     "для перевода обязателен origin.translatedFrom");
-            require(event.textWork().origin().translators() != null
-                            && !event.textWork().origin().translators().isEmpty(),
+            require(!origin.translators().isEmpty(),
                     "для перевода обязателен хотя бы один переводчик");
+            return;
         }
+
+        require(!notBlank(origin.translatedFrom()),
+                "у оригинала origin.translatedFrom должен быть пустым");
+        require(origin.translators().isEmpty(),
+                "у оригинала origin.translators должен быть пустым");
+    }
+
+    private static void validateStructure(UUID eventId, TextWorkPayload textWork) {
+        Set<UUID> ids = new HashSet<>();
+        registerId(ids, eventId, "eventId");
+        registerId(ids, textWork.id(), "textWork.id");
+
+        Set<UUID> voicePartIds = new HashSet<>();
+        Map<UUID, Integer> actualFragmentCounts = new HashMap<>();
+        textWork.voiceParts().forEach(voicePart -> {
+            require(voicePart != null, "textWork.voiceParts не должен содержать null");
+            registerId(ids, voicePart.id(), "voicePart.id");
+            voicePartIds.add(voicePart.id());
+            require(notBlank(voicePart.name()), "voicePart.name обязателен");
+            require(voicePart.totalFragmentsCount() > 0,
+                    "voicePart.totalFragmentsCount должен быть больше нуля: " + voicePart.id());
+        });
+
+        Set<Integer> segmentOrders = new HashSet<>();
+        int fragmentsCount = 0;
+        for (var segment : textWork.segments()) {
+            require(segment != null, "textWork.segments не должен содержать null");
+            registerId(ids, segment.id(), "segment.id");
+            require(segment.orderInTextWork() > 0,
+                    "segment.orderInTextWork должен быть больше нуля: " + segment.id());
+            require(segmentOrders.add(segment.orderInTextWork()),
+                    "дублируется segment.orderInTextWork=" + segment.orderInTextWork());
+            require(notBlank(segment.name()), "segment.name обязателен: " + segment.id());
+            require(segment.fragments() != null && !segment.fragments().isEmpty(),
+                    "segment.fragments не должен быть пустым: " + segment.id());
+
+            Set<Integer> fragmentOrders = new HashSet<>();
+            for (var fragment : segment.fragments()) {
+                require(fragment != null, "segment.fragments не должен содержать null: " + segment.id());
+                registerId(ids, fragment.id(), "voicePartFragment.id");
+                require(fragment.orderInSegment() > 0,
+                        "fragment.orderInSegment должен быть больше нуля: " + fragment.id());
+                require(fragmentOrders.add(fragment.orderInSegment()),
+                        "в сегменте " + segment.id() + " дублируется fragment.orderInSegment="
+                                + fragment.orderInSegment());
+                require(notBlank(fragment.content()),
+                        "fragment.content обязателен: " + fragment.id());
+                require(fragment.voicePartId() != null,
+                        "fragment.voicePartId обязателен: " + fragment.id());
+                require(voicePartIds.contains(fragment.voicePartId()),
+                        "фрагмент " + fragment.id() + " ссылается на неизвестный voicePart "
+                                + fragment.voicePartId());
+                actualFragmentCounts.merge(fragment.voicePartId(), 1, Integer::sum);
+                fragmentsCount++;
+            }
+        }
+
+        require(fragmentsCount > 0, "textWork должен содержать хотя бы один фрагмент");
+        if (textWork.segmentType() == SegmentType.SINGLE_SEGMENT) {
+            require(textWork.segments().size() == 1,
+                    "для SINGLE_SEGMENT должен быть ровно один сегмент");
+        }
+
+        textWork.voiceParts().forEach(voicePart -> {
+            int actual = actualFragmentCounts.getOrDefault(voicePart.id(), 0);
+            require(voicePart.totalFragmentsCount() == actual,
+                    "voicePart.totalFragmentsCount не совпадает с числом фрагментов для "
+                            + voicePart.id() + ": указано " + voicePart.totalFragmentsCount()
+                            + ", найдено " + actual);
+        });
+    }
+
+    private static void registerId(Set<UUID> ids, UUID id, String field) {
+        require(id != null, field + " обязателен");
+        require(ids.add(id), "UUID " + id + " используется повторно (" + field + ")");
     }
 
     private static boolean notBlank(String value) {

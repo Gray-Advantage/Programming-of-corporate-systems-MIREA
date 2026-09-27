@@ -1,14 +1,14 @@
-package space.grayt.teremok.book;
+package space.grayt.teremok.textwork;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import space.grayt.teremok.domain.Book;
-import space.grayt.teremok.domain.Line;
-import space.grayt.teremok.domain.Speaker;
+import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.domain.TextWorkFragment;
+import space.grayt.teremok.domain.VoicePart;
 
-class BookParserTest {
+class TextWorkParserTest {
 
     private static final String SOURCE = """
             title: Красная Шапочка
@@ -22,49 +22,49 @@ class BookParserTest {
 
     @Test
     void readsTitleAndLines() {
-        Book book = BookParser.parse("shapochka", SOURCE);
+        TextWork book = TextWorkParser.parse("shapochka", SOURCE);
 
         assertEquals("shapochka", book.id());
         assertEquals("Красная Шапочка", book.title());
-        assertEquals(4, book.lines().size());
+        assertEquals(4, book.fragments().size());
     }
 
     @Test
     void numbersLinesSequentiallySkippingBlankLines() {
-        Book book = BookParser.parse("shapochka", SOURCE);
+        TextWork book = TextWorkParser.parse("shapochka", SOURCE);
 
-        assertEquals(List.of(1, 2, 3, 4), book.lines().stream().map(Line::number).toList());
-        assertEquals("Куда ты идёшь?", book.lines().get(1).text());
+        assertEquals(List.of(1, 2, 3, 4), book.fragments().stream().map(TextWorkFragment::number).toList());
+        assertEquals("Куда ты идёшь?", book.fragments().get(1).text());
     }
 
     @Test
     void collectsSpeakersInOrderOfAppearanceWithoutDuplicates() {
-        Book book = BookParser.parse("shapochka", SOURCE);
+        TextWork book = TextWorkParser.parse("shapochka", SOURCE);
 
         assertEquals(List.of("Рассказчик", "Волк", "Шапочка"),
-                book.speakers().stream().map(Speaker::name).toList());
+                book.voiceParts().stream().map(VoicePart::name).toList());
     }
 
     @Test
     void returnsLinesOfOneSpeaker() {
-        Book book = BookParser.parse("shapochka", SOURCE);
+        TextWork book = TextWorkParser.parse("shapochka", SOURCE);
 
-        List<Line> wolf = book.linesOf(Speaker.idOf("Волк"));
+        List<TextWorkFragment> wolf = book.fragmentsOf(VoicePart.idOf("Волк"));
 
-        assertEquals(List.of(2, 4), wolf.stream().map(Line::number).toList());
+        assertEquals(List.of(2, 4), wolf.stream().map(TextWorkFragment::number).toList());
     }
 
     @Test
     void speakerIdIsLowercaseWithoutSpaces() {
-        assertEquals("красная-шапочка", Speaker.idOf("Красная Шапочка"));
+        assertEquals("красная-шапочка", VoicePart.idOf("Красная Шапочка"));
     }
 
     @Test
     void missingTitleIsAnError() {
         String source = "---\nВолк: Привет.\n";
 
-        BookFormatException error = assertThrows(BookFormatException.class,
-                () -> BookParser.parse("bad", source));
+        TextWorkFormatException error = assertThrows(TextWorkFormatException.class,
+                () -> TextWorkParser.parse("bad", source));
 
         assertTrue(error.getMessage().contains("title"));
     }
@@ -73,8 +73,8 @@ class BookParserTest {
     void lineWithoutColonIsAnErrorWithLineNumber() {
         String source = "title: Тест\n---\nВолк: Привет.\nпросто текст\n";
 
-        BookFormatException error = assertThrows(BookFormatException.class,
-                () -> BookParser.parse("bad", source));
+        TextWorkFormatException error = assertThrows(TextWorkFormatException.class,
+                () -> TextWorkParser.parse("bad", source));
 
         assertEquals(4, error.lineNumber());
     }
@@ -83,14 +83,14 @@ class BookParserTest {
     void missingSeparatorIsAnError() {
         String source = "title: Тест\nВолк: Привет.\n";
 
-        assertThrows(BookFormatException.class, () -> BookParser.parse("bad", source));
+        assertThrows(TextWorkFormatException.class, () -> TextWorkParser.parse("bad", source));
     }
 
     @Test
     void bookWithoutLinesIsAnError() {
         String source = "title: Тест\n---\n";
 
-        assertThrows(BookFormatException.class, () -> BookParser.parse("bad", source));
+        assertThrows(TextWorkFormatException.class, () -> TextWorkParser.parse("bad", source));
     }
 
     @Test
@@ -102,9 +102,9 @@ class BookParserTest {
             source.append("Персонаж: Реплика ").append(i).append("\n");
         }
 
-        Book book = BookParser.parse("limit-test", source.toString());
+        TextWork book = TextWorkParser.parse("limit-test", source.toString());
 
-        assertEquals(9999, book.lines().size());
+        assertEquals(9999, book.fragments().size());
     }
 
     @Test
@@ -116,8 +116,8 @@ class BookParserTest {
             source.append("Персонаж: Реплика ").append(i).append("\n");
         }
 
-        BookFormatException error = assertThrows(BookFormatException.class,
-                () -> BookParser.parse("limit-test", source.toString()));
+        TextWorkFormatException error = assertThrows(TextWorkFormatException.class,
+                () -> TextWorkParser.parse("limit-test", source.toString()));
 
         assertEquals(10002, error.lineNumber());
     }
