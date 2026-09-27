@@ -1,5 +1,11 @@
 package space.grayt.teremok.backend;
 
+import space.grayt.teremok.client.contract.CatalogTextWorkResponse;
+import space.grayt.teremok.client.contract.CountResponse;
+import space.grayt.teremok.client.contract.TextWorkContentResponse;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,11 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
-import space.grayt.teremok.client.contract.CatalogTextWorkResponse;
-import space.grayt.teremok.client.contract.CountResponse;
-import space.grayt.teremok.client.contract.TextWorkContentResponse;
-import tools.jackson.core.type.TypeReference;
-import tools.jackson.databind.json.JsonMapper;
 
 public final class BackendClient {
 
@@ -52,9 +53,6 @@ public final class BackendClient {
         return request(catalogUri, CATALOG_LIST);
     }
 
-    public CatalogTextWorkResponse catalogTextWork(UUID id) throws IOException, InterruptedException {
-        return request(URI.create(catalogUri + "/" + id), CatalogTextWorkResponse.class);
-    }
 
     public TextWorkContentResponse textWorkContent(UUID id) throws IOException, InterruptedException {
         return request(URI.create(contentUri + "/" + id), TextWorkContentResponse.class);

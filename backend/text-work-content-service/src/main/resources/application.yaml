@@ -13,7 +13,7 @@ spring:
         "spring.json.trusted.packages": space.grayt.teremok.events
         "spring.json.use.type.headers": false
     listener:
-      missing-topics-fatal: false
+      missing-topics-fatal: true
 
 management:
   endpoints:

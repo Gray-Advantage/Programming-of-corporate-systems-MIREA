@@ -1,13 +1,5 @@
 package space.grayt.teremok.textwork;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
 import space.grayt.teremok.backend.BackendClient;
 import space.grayt.teremok.client.contract.CatalogTextWorkResponse;
 import space.grayt.teremok.client.contract.TextWorkContentResponse;
@@ -17,7 +9,12 @@ import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.VoicePart;
 
-/** A snapshot of text works assembled from the two backend services. */
+import java.io.IOException;
+import java.util.*;
+
+/**
+ * A snapshot of text works assembled from the two backend services.
+ */
 public final class BackendTextWorkCatalog implements TextWorkCatalog {
 
     private final Map<String, TextWork> textWorks = new LinkedHashMap<>();
@@ -60,24 +57,30 @@ public final class BackendTextWorkCatalog implements TextWorkCatalog {
         }
     }
 
-    private static TextWork toTextWork(
-            CatalogTextWorkResponse textWork,
-            TextWorkContentResponse content) {
+    private static TextWork toTextWork(CatalogTextWorkResponse textWork, TextWorkContentResponse content) {
         if (!textWork.id().equals(content.id())) {
             throw new IllegalArgumentException("CatalogService и TextWorkContentService вернули разные id");
         }
 
         Map<String, VoicePart> voiceParts = new LinkedHashMap<>();
-        content.voiceParts().forEach(voicePart -> voiceParts.put(
-                voicePart.id().toString(),
-                new VoicePart(voicePart.id().toString(), voicePart.name())));
+        content
+                .voiceParts()
+                .forEach(voicePart -> voiceParts.put(
+                        voicePart.id().toString(),
+                        new VoicePart(voicePart.id().toString(), voicePart.name()))
+                );
 
         List<TextWorkFragment> fragments = new ArrayList<>();
-        List<Segment> segments = content.segments().stream()
+        List<Segment> segments = content
+                .segments()
+                .stream()
                 .sorted(Comparator.comparingInt(Segment::orderInTextWork))
                 .toList();
+
         for (Segment segment : segments) {
-            List<VoicePartFragment> segmentFragments = segment.fragments().stream()
+            List<VoicePartFragment> segmentFragments = segment
+                    .fragments()
+                    .stream()
                     .sorted(Comparator.comparingInt(VoicePartFragment::orderInSegment))
                     .toList();
             for (VoicePartFragment fragment : segmentFragments) {

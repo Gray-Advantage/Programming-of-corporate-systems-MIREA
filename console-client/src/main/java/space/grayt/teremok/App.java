@@ -1,5 +1,17 @@
 package space.grayt.teremok;
 
+import space.grayt.teremok.app.CastBuilder;
+import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.app.VoicingService;
+import space.grayt.teremok.app.VotingService;
+import space.grayt.teremok.audio.AudioPlayer;
+import space.grayt.teremok.audio.AudioRecorder;
+import space.grayt.teremok.cli.*;
+import space.grayt.teremok.domain.Profile;
+import space.grayt.teremok.storage.*;
+import space.grayt.teremok.textwork.TextWorkCatalog;
+import space.grayt.teremok.textwork.TextWorkLibrary;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -7,29 +19,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
-import space.grayt.teremok.app.CastBuilder;
-import space.grayt.teremok.app.PlaybackService;
-import space.grayt.teremok.app.VoicingService;
-import space.grayt.teremok.app.VotingService;
-import space.grayt.teremok.audio.AudioPlayer;
-import space.grayt.teremok.audio.AudioRecorder;
-import space.grayt.teremok.cli.Console;
-import space.grayt.teremok.cli.ListenFlow;
-import space.grayt.teremok.cli.MainMenu;
-import space.grayt.teremok.cli.MyVoicingsScreen;
-import space.grayt.teremok.cli.PlaybackConsole;
-import space.grayt.teremok.cli.ProfileScreen;
-import space.grayt.teremok.cli.RecordFlow;
-import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.storage.FileProfileRepository;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.ProfileRepository;
-import space.grayt.teremok.storage.StorageException;
-import space.grayt.teremok.storage.VoicingRepository;
-import space.grayt.teremok.textwork.TextWorkCatalog;
-import space.grayt.teremok.textwork.TextWorkLibrary;
 
-/** Wires the dependencies and runs the outer application loop. */
+/**
+ * Wires the dependencies and runs the outer application loop.
+ */
 public final class App {
 
     private final Path dataDir;
@@ -44,8 +37,7 @@ public final class App {
         this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), new TextWorkLibrary());
     }
 
-    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
-            TextWorkCatalog textWorks) {
+    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock, TextWorkCatalog textWorks) {
         this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), textWorks);
     }
 
@@ -54,12 +46,12 @@ public final class App {
      * so the suite does not sleep in real time; the production Main uses the constructor without it.
      */
     public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
-            UnaryOperator<Duration> pauseTransform) {
+               UnaryOperator<Duration> pauseTransform) {
         this(dataDir, console, recorder, player, clock, pauseTransform, new TextWorkLibrary());
     }
 
     App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
-            UnaryOperator<Duration> pauseTransform, TextWorkCatalog textWorks) {
+        UnaryOperator<Duration> pauseTransform, TextWorkCatalog textWorks) {
         this.dataDir = dataDir;
         this.console = console;
         this.recorder = recorder;
@@ -89,10 +81,8 @@ public final class App {
 
         ProfileScreen profileScreen = new ProfileScreen(console, profiles);
         RecordFlow record = new RecordFlow(console, textWorks, voicingService, player);
-        ListenFlow listen = new ListenFlow(console, textWorks, castBuilder, voting, playback, playbackConsole, player,
-                profiles);
-        MyVoicingsScreen mine = new MyVoicingsScreen(console, textWorks, voicingService, voting, castBuilder,
-                playback, playbackConsole, record);
+        ListenFlow listen = new ListenFlow(console, textWorks, castBuilder, voting, playback, playbackConsole, player, profiles);
+        MyVoicingsScreen mine = new MyVoicingsScreen(console, textWorks, voicingService, voting, castBuilder, playback, playbackConsole, record);
         MainMenu menu = new MainMenu(console, listen, record, mine, voicings);
 
         try {

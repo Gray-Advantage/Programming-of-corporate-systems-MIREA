@@ -43,7 +43,8 @@ public class TextWorkContentController {
                         source.id(),
                         source.orderInTextWork(),
                         source.name(),
-                        source.fragments().stream()
+                        source.fragments()
+                                .stream()
                                 .map(fragment -> new VoicePartFragment(
                                         fragment.id(),
                                         fragment.orderInSegment(),

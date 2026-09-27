@@ -1,25 +1,23 @@
 package space.grayt.teremok.cli;
 
-import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
 import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.VoteResult;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
-import space.grayt.teremok.domain.Cast;
-import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.domain.RatedVoicing;
-import space.grayt.teremok.domain.TextWork;
-import space.grayt.teremok.domain.VoteKind;
-import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.domain.*;
 import space.grayt.teremok.storage.ProfileRepository;
 import space.grayt.teremok.textwork.TextWorkCatalog;
 
-/** Choosing a text work and a cast, and listening. Votes are cast here too. */
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
+
+/**
+ * Choosing a text work and a cast, and listening. Votes are cast here too.
+ */
 public final class ListenFlow {
 
     private final Console console;
@@ -31,9 +29,16 @@ public final class ListenFlow {
     private final AudioPlayer player;
     private final ProfileRepository profiles;
 
-    public ListenFlow(Console console, TextWorkCatalog textWorks, CastBuilder castBuilder, VotingService voting,
-            PlaybackService playback, PlaybackConsole playbackConsole, AudioPlayer player,
-            ProfileRepository profiles) {
+    public ListenFlow(
+            Console console,
+            TextWorkCatalog textWorks,
+            CastBuilder castBuilder,
+            VotingService voting,
+            PlaybackService playback,
+            PlaybackConsole playbackConsole,
+            AudioPlayer player,
+            ProfileRepository profiles
+    ) {
         this.console = console;
         this.textWorks = textWorks;
         this.castBuilder = castBuilder;
@@ -96,8 +101,7 @@ public final class ListenFlow {
         while (true) {
             List<RatedVoicing> ranked = voting.ranked(textWork.id(), voicePart.id());
             console.println();
-            console.println(voicePart.name() + " — "
-                    + Plural.fragments(textWork.fragmentsOf(voicePart.id()).size()));
+            console.println(voicePart.name() + " — " + Plural.fragments(textWork.fragmentsOf(voicePart.id()).size()));
             console.println();
             for (int i = 0; i < ranked.size(); i++) {
                 RatedVoicing rated = ranked.get(i);
@@ -130,9 +134,11 @@ public final class ListenFlow {
         }
     }
 
-    /** A non-empty result means the cast is chosen and the screen should close. */
+    /**
+     * A non-empty result means the cast is chosen and the screen should close.
+     */
     private Optional<Cast> applyCommand(Profile profile, Cast cast, VoicePart voicePart,
-            List<RatedVoicing> ranked, String command) {
+                                        List<RatedVoicing> ranked, String command) {
         if (command.length() > 2 && command.charAt(1) == ' ') {
             OptionalInt index = Console.index(command.substring(2), ranked.size());
             if (index.isEmpty()) {

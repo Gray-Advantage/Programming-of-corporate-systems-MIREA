@@ -1,7 +1,5 @@
 package space.grayt.teremok.catalog.web;
 
-import java.util.List;
-import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +12,9 @@ import space.grayt.teremok.client.contract.CatalogTextWorkResponse.OriginType;
 import space.grayt.teremok.client.contract.CatalogTextWorkResponse.SegmentType;
 import space.grayt.teremok.client.contract.CatalogTextWorkResponse.TextWorkOrigin;
 import space.grayt.teremok.client.contract.CountResponse;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/catalog/text-works")
@@ -32,7 +33,8 @@ public class CatalogController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CatalogTextWorkResponse> findById(@PathVariable UUID id) {
-        return repository.findById(id)
+        return repository
+                .findById(id)
                 .map(CatalogController::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

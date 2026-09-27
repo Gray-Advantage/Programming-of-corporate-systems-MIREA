@@ -39,7 +39,9 @@ public final class VotingService {
     }
 
     public Optional<VoteKind> voteOf(String voicingId, String voterId) {
-        return repository.votes(voicingId).stream()
+        return repository
+                .votes(voicingId)
+                .stream()
                 .filter(vote -> vote.profileId().equals(voterId))
                 .map(Vote::kind)
                 .findFirst();
