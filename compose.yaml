@@ -1,0 +1,143 @@
+services:
+  traefik:
+    image: traefik:v3.7
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "8080:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      - traefik.enable=true
+      - traefik.http.middlewares.local-cors.headers.accesscontrolallowmethods=GET,POST,PUT,PATCH,DELETE,OPTIONS
+      - traefik.http.middlewares.local-cors.headers.accesscontrolallowheaders=*
+      - traefik.http.middlewares.local-cors.headers.accesscontrolalloworiginlist=*
+      - traefik.http.middlewares.local-cors.headers.addvaryheader=true
+    networks:
+      - edge
+      - backend
+
+  kafka:
+    image: apache/kafka:4.1.2
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: CONTROLLER://:9093,PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: "1"
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - backend
+
+  kafka-topics-init:
+    image: apache/kafka:4.1.2
+    profiles: ["tools"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command:
+      - /opt/kafka/bin/kafka-topics.sh
+      - --bootstrap-server
+      - kafka:9092
+      - --create
+      - --if-not-exists
+      - --topic
+      - text-work-added
+      - --partitions
+      - "1"
+      - --replication-factor
+      - "1"
+    networks:
+      - backend
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: backend/catalog-service/Dockerfile
+    image: teremok-catalog-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      kafka:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.catalog.rule=PathPrefix(`/api/v1/catalog`)
+      - traefik.http.routers.catalog.entrypoints=web
+      - traefik.http.routers.catalog.middlewares=local-cors@docker
+      - traefik.http.services.catalog.loadbalancer.server.port=8080
+    networks:
+      - backend
+
+  text-work-content-service:
+    build:
+      context: .
+      dockerfile: backend/text-work-content-service/Dockerfile
+    image: teremok-text-work-content-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      kafka:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.text-work-content.rule=PathPrefix(`/api/v1/text-work-content`)
+      - traefik.http.routers.text-work-content.entrypoints=web
+      - traefik.http.routers.text-work-content.middlewares=local-cors@docker
+      - traefik.http.services.text-work-content.loadbalancer.server.port=8080
+    networks:
+      - backend
+
+  text-work-deployer:
+    build:
+      context: .
+      dockerfile: backend/text-work-deployer/Dockerfile
+    image: teremok-text-work-deployer:local
+    profiles: ["tools"]
+    stdin_open: true
+    tty: true
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./examples:/examples:ro
+    networks:
+      - backend
+
+networks:
+  edge:
+    name: teremok-edge
+  backend:
+    name: teremok-backend
+    internal: true
+
+volumes:
+  kafka-data:

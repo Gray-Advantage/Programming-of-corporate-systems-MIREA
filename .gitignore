@@ -1,5 +1,8 @@
 build/
 .gradle/
+.gradle-local/
+**/build/
+**/.gradle/
 data/
 .idea/
 *.iml

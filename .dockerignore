@@ -1,0 +1,9 @@
+.git
+.gradle
+.gradle-local
+.idea
+**/build
+**/.gradle
+data
+*.iml
+*.drawio

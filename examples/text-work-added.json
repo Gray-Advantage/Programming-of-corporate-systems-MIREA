@@ -1,0 +1,53 @@
+{
+  "eventId": "01995a5a-6f42-7b4a-8e95-97eb57551572",
+  "eventVersion": 1,
+  "occurredAt": "2026-09-27T00:00:00Z",
+  "textWork": {
+    "id": "01995a5b-1079-7f54-a1aa-945c38536b7c",
+    "authors": [
+      "Русская народная сказка"
+    ],
+    "name": "Теремок",
+    "publicationDate": null,
+    "language": "rus",
+    "origin": {
+      "type": "ORIGINAL",
+      "translatedFrom": null,
+      "translators": []
+    },
+    "segmentType": "SINGLE_SEGMENT",
+    "segments": [
+      {
+        "id": "01995a5b-45c4-7e1d-a191-6c8df4bd9019",
+        "orderInTextWork": 1,
+        "name": "Теремок",
+        "fragments": [
+          {
+            "id": "01995a5b-a22f-7b21-9216-fad5b1796d33",
+            "orderInSegment": 1,
+            "content": "Стоит в поле теремок.",
+            "voicePartId": "01995a5c-2285-777d-b32c-b1a5c400f12e"
+          },
+          {
+            "id": "01995a5c-6970-73ec-a783-e2e27db1a92c",
+            "orderInSegment": 2,
+            "content": "Кто-кто в теремочке живёт?",
+            "voicePartId": "01995a5c-a532-7625-b81a-e225784ed5f0"
+          }
+        ]
+      }
+    ],
+    "voiceParts": [
+      {
+        "id": "01995a5c-2285-777d-b32c-b1a5c400f12e",
+        "name": "Автор",
+        "totalFragmentsCount": 1
+      },
+      {
+        "id": "01995a5c-a532-7625-b81a-e225784ed5f0",
+        "name": "Мышка-норушка",
+        "totalFragmentsCount": 1
+      }
+    ]
+  }
+}

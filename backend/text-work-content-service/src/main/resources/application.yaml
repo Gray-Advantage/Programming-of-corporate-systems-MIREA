@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: text-work-content-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        "spring.json.value.default.type": space.grayt.teremok.events.TextWorkAddedEvent
+        "spring.json.trusted.packages": space.grayt.teremok.events
+        "spring.json.use.type.headers": false
+    listener:
+      missing-topics-fatal: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
