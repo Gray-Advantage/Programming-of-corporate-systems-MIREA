@@ -42,6 +42,21 @@ WAV-файлы лежат на диске.
    .\gradlew.bat :console-client:run
    ```
 
+   Или через Maven — `pom.xml` лежит рядом с `build.gradle.kts` и собирает те же
+   исходники. Устанавливать Maven не нужно: `mvnw` сам скачает Maven 3.9 при первом
+   запуске. Команды — из папки `console-client`:
+
+   ```shell
+   cd console-client
+   ./mvnw -q exec:java    # запустить клиент
+   ./mvnw test            # прогнать тесты
+   ```
+
+   ```powershell
+   cd console-client
+   .\mvnw.cmd -q exec:java
+   ```
+
 Клиент берёт настройки из переменных окружения, а если переменной нет — из
 ближайшего файла `.env` (в рабочей папке или до трёх папок выше, поэтому
 `./gradlew :console-client:run` находит `.env` в корне репозитория):
