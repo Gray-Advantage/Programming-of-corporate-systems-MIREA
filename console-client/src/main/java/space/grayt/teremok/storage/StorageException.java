@@ -1,7 +1,13 @@
 package space.grayt.teremok.storage;
 
-/** Storage file error. The message is ready to show to the user. */
-public class StorageException extends RuntimeException {
+import space.grayt.teremok.exception.TeremokException;
+
+/** The database or the audio directory failed. The message is ready to show to the user. */
+public class StorageException extends TeremokException {
+
+    public StorageException(String message) {
+        super(message);
+    }
 
     public StorageException(String message, Throwable cause) {
         super(message, cause);
