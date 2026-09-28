@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /** Session casting: which voicing plays each voice part. No key means it is read as text. */
-public record Cast(Map<String, String> voicingByVoicePart) {
+public record Cast(Map<String, Long> voicingByVoicePart) {
 
     public Cast {
         voicingByVoicePart = Map.copyOf(voicingByVoicePart);
@@ -15,18 +15,18 @@ public record Cast(Map<String, String> voicingByVoicePart) {
         return new Cast(Map.of());
     }
 
-    public Optional<String> voicingFor(String voicePartId) {
+    public Optional<Long> voicingFor(String voicePartId) {
         return Optional.ofNullable(voicingByVoicePart.get(voicePartId));
     }
 
-    public Cast with(String voicePartId, String voicingId) {
-        Map<String, String> updated = new LinkedHashMap<>(voicingByVoicePart);
+    public Cast with(String voicePartId, long voicingId) {
+        Map<String, Long> updated = new LinkedHashMap<>(voicingByVoicePart);
         updated.put(voicePartId, voicingId);
         return new Cast(updated);
     }
 
     public Cast without(String voicePartId) {
-        Map<String, String> updated = new LinkedHashMap<>(voicingByVoicePart);
+        Map<String, Long> updated = new LinkedHashMap<>(voicingByVoicePart);
         updated.remove(voicePartId);
         return new Cast(updated);
     }

@@ -24,6 +24,11 @@ public final class Jdbc {
         return "23505".equals(e.getSQLState());
     }
 
+    /** PostgreSQL reports a missing parent row as 23503, H2 as 23506. */
+    public static boolean isForeignKeyViolation(SQLException e) {
+        return "23503".equals(e.getSQLState()) || "23506".equals(e.getSQLState());
+    }
+
     public static StorageException failure(String action, SQLException e) {
         return new StorageException(action + ": " + e.getMessage(), e);
     }

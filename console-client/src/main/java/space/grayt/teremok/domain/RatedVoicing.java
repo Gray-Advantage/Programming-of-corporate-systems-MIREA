@@ -10,7 +10,7 @@ public record RatedVoicing(Voicing voicing, int likes, int dislikes) {
             Comparator.<RatedVoicing>comparingInt(RatedVoicing::score).reversed()
                     .thenComparing(Comparator.<RatedVoicing>comparingInt(RatedVoicing::likes).reversed())
                     .thenComparing(rated -> rated.voicing().createdAt(), Comparator.reverseOrder())
-                    .thenComparing(rated -> rated.voicing().id());
+                    .thenComparingLong(rated -> rated.voicing().id());
 
     public int score() {
         return likes - dislikes;

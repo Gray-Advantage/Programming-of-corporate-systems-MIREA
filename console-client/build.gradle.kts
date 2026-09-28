@@ -40,6 +40,7 @@ tasks.test {
 // Tests build their H2 databases from the same schema.sql and seed.sql that PostgreSQL loads.
 tasks.processTestResources {
     from(rootProject.file("database")) {
+        include("*.sql")
         into("database")
     }
 }

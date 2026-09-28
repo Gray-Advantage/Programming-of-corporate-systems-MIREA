@@ -5,67 +5,52 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.app.CastBuilder;
+import space.grayt.teremok.Fixture;
 import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.app.ProfileService;
 import space.grayt.teremok.app.VotingService;
-import space.grayt.teremok.audio.FakeAudioPlayer;
-import space.grayt.teremok.textwork.TextWorkLibrary;
 import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.domain.VoicingStatus;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
-import space.grayt.teremok.domain.VoteKind;
-import space.grayt.teremok.storage.FileProfileRepository;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.ProfileRepository;
-import space.grayt.teremok.storage.VoicingRepository;
+import space.grayt.teremok.domain.VoicingStatus;
 
+/** Text works are listed by title: 1 Колобок, 2 Красная Шапочка, 3 Теремок. */
 class ListenFlowTest {
 
-    private static final Profile MASHA = new Profile("masha", "Маша");
-    private static final TextWorkLibrary BOOKS = new TextWorkLibrary();
-
-    private VoicingRepository repository;
-    private ProfileRepository profiles;
-    private FakeAudioPlayer player;
+    private Fixture fixture;
+    private TextWork shapochka;
+    private Profile masha;
     private ByteArrayOutputStream out;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        repository = new FileVoicingRepository(dir);
-        profiles = new FileProfileRepository(dir);
-        player = new FakeAudioPlayer();
+        fixture = Fixture.withSeedTextWorks(dir);
+        shapochka = fixture.textWork("Красная Шапочка");
+        masha = fixture.profile("masha");
     }
 
-    /** Publishes the Mother voicing of Little Red Riding Hood with line 2 recorded. */
-    private Voicing publishMama(String author, int likes) throws Exception {
-        Voicing voicing = Voicing.newDraft("shapochka", "мама", author, Instant.parse("2026-09-01T10:00:00Z"))
-                .withStatus(VoicingStatus.PUBLISHED);
-        repository.save(voicing);
-        Path file = repository.audioFile(voicing.id(), 2);
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, "звук");
-        for (int i = 0; i < likes; i++) {
-            repository.putVote(voicing.id(), "fan" + i, VoteKind.LIKE);
-        }
+    /** Publishes the Mother voicing of Little Red Riding Hood: its only fragment 2 is recorded. */
+    private Voicing publishMama(String author, int likes) {
+        Voicing voicing = fixture.voicing(shapochka, "Мама", author, VoicingStatus.PUBLISHED);
+        fixture.likes(voicing, likes);
         return voicing;
     }
 
     private void run(String input) {
         out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
-        VotingService voting = new VotingService(repository);
-        PlaybackService playback = new PlaybackService(repository);
-        new ListenFlow(console, BOOKS, new CastBuilder(voting), voting, playback,
-                // Zero reading pause: the test must not actually wait for unvoiced lines.
-                new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO), player, profiles)
-                .run(MASHA);
+        VotingService voting = fixture.voting();
+        ProfileService profiles = fixture.profiles();
+        new ListenFlow(console, fixture.textWorks, fixture.castBuilder(), voting, fixture.playback(),
+                // Zero reading pause: the test must not actually wait for unvoiced fragments.
+                new PlaybackConsole(console, fixture.player, profiles, duration -> Duration.ZERO),
+                fixture.player, profiles)
+                .run(masha);
     }
 
     private String printed() {
@@ -79,99 +64,119 @@ class ListenFlowTest {
     }
 
     @Test
-    void castIsFilledWithBestVoicingAutomatically() throws Exception {
-        publishMama("sergey", 1);
+    void textWorksAreListedByTitle() {
+        run("0\n");
 
-        run("1\n0\n");
-
-        assertTrue(printed().contains("sergey"));
+        String printed = printed();
+        assertTrue(printed.indexOf("1  Колобок") < printed.indexOf("2  Красная Шапочка"), printed);
+        assertTrue(printed.indexOf("2  Красная Шапочка") < printed.indexOf("3  Теремок"), printed);
     }
 
     @Test
-    void speakerWithoutVoicingIsShownAsText() {
-        run("1\n0\n");
+    void castIsFilledWithBestVoicingAutomatically() {
+        publishMama("sergey", 1);
+
+        run("2\n0\n");
+
+        assertTrue(printed().contains("Мама  sergey  [+1]"), this::printed);
+    }
+
+    @Test
+    void voicePartWithoutVoicingIsShownAsText() {
+        run("2\n0\n");
 
         assertTrue(printed().contains("текстом"));
     }
 
     @Test
-    void playbackPlaysVoicedLines() throws Exception {
+    void archivedVoicingIsNotOfferedForListening() {
+        Voicing mama = publishMama("sergey", 3);
+        fixture.withStatus(mama, VoicingStatus.ARCHIVED);
+
+        run("2\nn\n2\n0\n0\n");
+
+        assertTrue(printed().contains("Мама  — текстом —"), this::printed);
+        assertTrue(printed().contains("Опубликованных озвучек пока нет"), this::printed);
+    }
+
+    @Test
+    void playbackPlaysVoicedFragments() {
         publishMama("sergey", 1);
 
-        run("1\ns\n");
+        run("2\ns\n");
 
-        assertEquals(1, player.played().size());
+        assertEquals(1, fixture.player.played().size());
         assertTrue(printed().contains("Произведение закончилось"));
     }
 
     @Test
-    void likeCountsTowardScore() throws Exception {
+    void likeCountsTowardScore() {
         Voicing mama = publishMama("sergey", 0);
 
-        run("1\nn\n2\nl 1\n0\n0\n");
+        run("2\nn\n2\nl 1\n0\n0\n");
 
-        assertEquals(1, repository.votes(mama.id()).size());
+        assertEquals(1, fixture.voicingRepository.votes(mama.id()).size());
         assertTrue(printed().contains("Лайк"));
     }
 
     @Test
-    void repeatedLikeRemovesVote() throws Exception {
+    void repeatedLikeRemovesVote() {
         Voicing mama = publishMama("sergey", 0);
 
-        run("1\nn\n2\nl 1\nl 1\n0\n0\n");
+        run("2\nn\n2\nl 1\nl 1\n0\n0\n");
 
-        assertTrue(repository.votes(mama.id()).isEmpty());
+        assertTrue(fixture.voicingRepository.votes(mama.id()).isEmpty());
     }
 
     @Test
-    void votingForOwnVoicingIsRejectedWithExplanation() throws Exception {
+    void votingForOwnVoicingIsRejectedWithExplanation() {
         publishMama("masha", 0);
 
-        run("1\nn\n2\nl 1\n0\n0\n");
+        run("2\nn\n2\nl 1\n0\n0\n");
 
         assertTrue(printed().contains("свою"));
     }
 
     @Test
-    void voiceCanBeSwitchedToText() throws Exception {
+    void voiceCanBeSwitchedToText() {
         publishMama("sergey", 1);
 
-        run("1\nn\n2\nt\ns\n");
+        run("2\nn\n2\nt\ns\n");
 
-        assertTrue(player.played().isEmpty());
+        assertTrue(fixture.player.played().isEmpty());
     }
 
     @Test
-    void samplePlaysFirstRecordedLine() throws Exception {
+    void samplePlaysFirstRecordedFragment() {
         publishMama("sergey", 1);
 
-        run("1\nn\n2\np 1\n0\n0\n");
+        run("2\nn\n2\np 1\n0\n0\n");
 
-        assertEquals(1, player.played().size());
+        assertEquals(1, fixture.player.played().size());
     }
 
     @Test
-    void inputDuringPlaybackStopsIt() throws Exception {
+    void inputDuringPlaybackStopsIt() {
         publishMama("sergey", 1);
 
-        run("1\ns\nстоп\n0\n");
+        run("2\ns\nстоп\n0\n");
 
         assertTrue(printed().contains("Остановлено"));
     }
 
     @Test
     void unknownCommandDoesNotBreakScreen() {
-        run("1\nчто-то\n0\n");
+        run("2\nчто-то\n0\n");
 
         assertTrue(printed().contains("Не понимаю"));
     }
 
     @Test
-    void authorIsShownByProfileNameNotId() throws Exception {
-        profiles.create("Сергей");
+    void authorIsShownByProfileNameNotId() {
+        fixture.profile("Сергей");
         publishMama("сергей", 0);
 
-        run("1\nn\n2\n0\ns\n");
+        run("2\nn\n2\n0\ns\n");
 
         String printed = printed();
         assertTrue(printed.contains("Мама  Сергей"), () -> "в касте нет имени автора:\n" + printed);
@@ -181,10 +186,10 @@ class ListenFlowTest {
     }
 
     @Test
-    void lineAndVoteCountsUseRussianPlurals() throws Exception {
+    void fragmentAndVoteCountsUseRussianPlurals() {
         publishMama("sergey", 0);
 
-        run("1\nn\n2\nl 1\n0\n0\n");
+        run("2\nn\n2\nl 1\n0\n0\n");
 
         String printed = printed();
         assertTrue(printed.contains("Красная Шапочка — 21 фрагмент"), () -> printed);

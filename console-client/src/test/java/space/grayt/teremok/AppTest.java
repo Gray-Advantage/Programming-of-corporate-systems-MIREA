@@ -5,50 +5,60 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import space.grayt.teremok.audio.FakeAudioPlayer;
 import space.grayt.teremok.audio.FakeAudioRecorder;
 import space.grayt.teremok.cli.Console;
+import space.grayt.teremok.db.DatabaseConfig;
+import space.grayt.teremok.db.DatabaseManager;
+import space.grayt.teremok.db.TestDatabase;
+import space.grayt.teremok.storage.AudioStorage;
+import space.grayt.teremok.textwork.JdbcTextWorkCatalog;
 
-/** A disk failure must not escape as a raw exception. */
+/** Database failures must end in words, not in a raw exception. */
 class AppTest {
 
     @Test
-    void unavailableDataDirectoryIsExplainedInWords(@TempDir Path dir) throws Exception {
-        Path data = dir.resolve("data");
-        Files.write(data, List.of("это файл, а не каталог"), UTF_8);
+    void unreachableDatabaseIsExplainedWithHint(@TempDir Path dir) {
+        DatabaseManager database = new DatabaseManager(
+                new DatabaseConfig("jdbc:postgresql://localhost:1/teremok", "teremok", "teremok"));
 
-        String printed = run(data, "0\n");
+        String printed = run(database, dir, "0\n");
 
-        assertTrue(printed.contains("Нет доступа к каталогу данных"), () -> printed);
+        assertTrue(printed.contains("Не удалось подключиться к базе данных jdbc:postgresql://localhost:1/teremok"),
+                () -> printed);
+        assertTrue(printed.contains("docker compose up -d postgres"), () -> printed);
+        assertFalse(printed.contains("Кто вы?"), () -> printed);
     }
 
-    /**
-     * profiles.txt is replaced by a directory: reading skips it, but writing a new profile
-     * raises StorageException from deep inside storage.
-     */
+    /** The profiles table is gone: the failure surfaces from deep inside a repository. */
     @Test
-    void diskWriteFailureEndsWithMessage(@TempDir Path dir) throws Exception {
-        Path data = dir.resolve("data");
-        Files.createDirectories(data.resolve("profiles.txt"));
-        Files.write(data.resolve("profiles.txt").resolve("занято.txt"), List.of("х"), UTF_8);
+    void storageFailureEndsWithMessage(@TempDir Path dir) {
+        DatabaseManager database = TestDatabase.withTextWorks();
+        TestDatabase.execute(database, "DROP TABLE profiles CASCADE");
 
-        String printed = run(data, "n\nmasha\n");
+        String printed = run(database, dir, "0\n");
 
-        assertTrue(printed.contains("Не удалось записать файл"), () -> printed);
+        assertTrue(printed.contains("Не удалось прочитать профили"), () -> printed);
         assertTrue(printed.contains("Работа завершена."), () -> printed);
     }
 
-    private static String run(Path data, String input) {
+    @Test
+    void quittingRightAway(@TempDir Path dir) {
+        String printed = run(TestDatabase.withTextWorks(), dir, "0\n");
+
+        assertTrue(printed.contains("Кто вы?"), () -> printed);
+        assertTrue(printed.contains("До встречи"), () -> printed);
+    }
+
+    private static String run(DatabaseManager database, Path dir, String input) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
-        assertDoesNotThrow(() -> new App(data, console, new FakeAudioRecorder(), new FakeAudioPlayer(),
-                Clock.systemUTC()).run());
+        assertDoesNotThrow(() -> new App(database, new JdbcTextWorkCatalog(database), new AudioStorage(dir), console,
+                new FakeAudioRecorder(), new FakeAudioPlayer(), Clock.systemUTC()).run());
         return out.toString(UTF_8);
     }
 }

@@ -4,59 +4,46 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.textwork.TextWorkParser;
-import space.grayt.teremok.domain.TextWork;
+import space.grayt.teremok.Fixture;
 import space.grayt.teremok.domain.Cast;
-import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.VoicingRepository;
 
 class PlaybackServiceTest {
 
-    private static final TextWork BOOK = TextWorkParser.parse("shapochka", """
-            title: Красная Шапочка
-            ---
-            Волк: Куда ты идёшь?
-            Шапочка: К бабушке.
-            Волк: А где живёт бабушка?
-            """);
-    private static final String WOLF = VoicePart.idOf("Волк");
-    private static final String HOOD = VoicePart.idOf("Шапочка");
-
-    private VoicingRepository repository;
+    private Fixture fixture;
+    private TextWork book;
+    private String wolf;
+    private String hood;
     private PlaybackService playback;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        repository = new FileVoicingRepository(dir);
-        playback = new PlaybackService(repository);
+        fixture = Fixture.empty(dir.resolve("audio"));
+        book = fixture.addTextWork("Красная Шапочка",
+                "Волк: Куда ты идёшь?",
+                "Шапочка: К бабушке.",
+                "Волк: А где живёт бабушка?");
+        wolf = fixture.voicePartId(book, "Волк");
+        hood = fixture.voicePartId(book, "Шапочка");
+        playback = fixture.playback();
     }
 
-    private Voicing withAudio(String speakerId, String author, int... lines) throws Exception {
-        Voicing voicing = Voicing.newDraft("shapochka", speakerId, author, Instant.parse("2026-09-01T10:00:00Z"))
-                .withStatus(VoicingStatus.PUBLISHED);
-        repository.save(voicing);
-        for (int line : lines) {
-            Path file = repository.audioFile(voicing.id(), line);
-            Files.createDirectories(file.getParent());
-            Files.writeString(file, "звук");
-        }
-        return voicing;
+    private Voicing wolfWithAudio(String author, int... fragments) {
+        Voicing voicing = fixture.withStatus(fixture.draft(book, "Волк", author), VoicingStatus.PUBLISHED);
+        return fixture.record(voicing, fragments);
     }
 
     @Test
-    void voicedLinesPlayAudioOthersAreText() throws Exception {
-        Voicing wolf = withAudio(WOLF, "sergey", 1, 3);
-        Cast cast = Cast.empty().with(WOLF, wolf.id());
+    void voicedFragmentsPlayAudioOthersAreText() {
+        Voicing voicing = wolfWithAudio("sergey", 1, 3);
 
-        List<PlaybackStep> steps = playback.plan(BOOK, cast);
+        List<PlaybackStep> steps = playback.plan(book, Cast.empty().with(wolf, voicing.id()));
 
         assertEquals(3, steps.size());
         assertTrue(steps.get(0).isSpoken());
@@ -67,41 +54,62 @@ class PlaybackServiceTest {
     }
 
     @Test
-    void lineOrderAndSpeakerNamesArePreserved() throws Exception {
-        Cast cast = Cast.empty().with(WOLF, withAudio(WOLF, "sergey", 1, 3).id());
+    void audioComesFromStoredPathInsideAudioDirectory() {
+        Voicing voicing = wolfWithAudio("sergey", 1);
 
-        List<PlaybackStep> steps = playback.plan(BOOK, cast);
+        PlaybackStep first = playback.plan(book, Cast.empty().with(wolf, voicing.id())).get(0);
 
-        assertEquals(List.of(1, 2, 3), steps.stream().map(step -> step.fragment().number()).toList());
-        assertEquals(List.of("Волк", "Шапочка", "Волк"),
-                steps.stream().map(PlaybackStep::voicePartName).toList());
+        assertEquals(fixture.audio.root().resolve(voicing.id() + "/fragment-0001.wav"), first.audio());
     }
 
     @Test
-    void missingFileIsReadAsText() throws Exception {
-        Voicing wolf = withAudio(WOLF, "sergey", 1);
-        Cast cast = Cast.empty().with(WOLF, wolf.id());
+    void fragmentOrderAndVoicePartNamesArePreserved() {
+        Cast cast = Cast.empty().with(wolf, wolfWithAudio("sergey", 1, 3).id());
 
-        List<PlaybackStep> steps = playback.plan(BOOK, cast);
+        List<PlaybackStep> steps = playback.plan(book, cast);
+
+        assertEquals(List.of(1, 2, 3), steps.stream().map(step -> step.fragment().number()).toList());
+        assertEquals(List.of("Волк", "Шапочка", "Волк"), steps.stream().map(PlaybackStep::voicePartName).toList());
+    }
+
+    @Test
+    void unrecordedFragmentIsReadAsText() {
+        Voicing voicing = wolfWithAudio("sergey", 1);
+
+        List<PlaybackStep> steps = playback.plan(book, Cast.empty().with(wolf, voicing.id()));
 
         assertTrue(steps.get(0).isSpoken());
         assertFalse(steps.get(2).isSpoken());
     }
 
     @Test
-    void emptyFileCountsAsMissing() throws Exception {
-        Voicing wolf = withAudio(WOLF, "sergey", 1);
-        Files.writeString(repository.audioFile(wolf.id(), 3), "");
-        Cast cast = Cast.empty().with(WOLF, wolf.id());
+    void recordingWhoseFileIsGoneIsReadAsText() throws Exception {
+        Voicing voicing = wolfWithAudio("sergey", 1, 3);
+        Files.delete(fixture.audio.fileFor(voicing.id(), 3));
 
-        assertFalse(playback.plan(BOOK, cast).get(2).isSpoken());
+        assertFalse(playback.plan(book, Cast.empty().with(wolf, voicing.id())).get(2).isSpoken());
+    }
+
+    @Test
+    void emptyFileCountsAsMissing() throws Exception {
+        Voicing voicing = wolfWithAudio("sergey", 1, 3);
+        Files.writeString(fixture.audio.fileFor(voicing.id(), 3), "");
+
+        assertFalse(playback.plan(book, Cast.empty().with(wolf, voicing.id())).get(2).isSpoken());
+    }
+
+    @Test
+    void pathLeadingOutsideAudioDirectoryIsNotPlayed() throws Exception {
+        Voicing voicing = wolfWithAudio("sergey");
+        Files.writeString(fixture.audio.root().resolveSibling("outside.wav"), "звук");
+        fixture.voicingRepository.markRecorded(voicing.id(), 1, "../outside.wav", 1000);
+
+        assertFalse(playback.plan(book, Cast.empty().with(wolf, voicing.id())).get(0).isSpoken());
     }
 
     @Test
     void referenceToMissingVoicingDoesNotBreakPlan() {
-        Cast cast = Cast.empty().with(HOOD, "нет__такой__роли");
-
-        List<PlaybackStep> steps = playback.plan(BOOK, cast);
+        List<PlaybackStep> steps = playback.plan(book, Cast.empty().with(hood, 999L));
 
         assertEquals(3, steps.size());
         assertTrue(steps.stream().noneMatch(PlaybackStep::isSpoken));
@@ -109,9 +117,21 @@ class PlaybackServiceTest {
 
     @Test
     void emptyCastGivesTextOnlyPlan() {
-        List<PlaybackStep> steps = playback.plan(BOOK, Cast.empty());
+        List<PlaybackStep> steps = playback.plan(book, Cast.empty());
 
         assertEquals(3, steps.size());
         assertTrue(steps.stream().noneMatch(PlaybackStep::isSpoken));
+    }
+
+    @Test
+    void sampleIsFirstRecordedFragment() {
+        Voicing voicing = wolfWithAudio("sergey", 3, 1);
+
+        assertEquals(fixture.audio.fileFor(voicing.id(), 1), playback.sample(voicing).orElseThrow());
+    }
+
+    @Test
+    void voicingWithoutRecordingsHasNoSample() {
+        assertTrue(playback.sample(wolfWithAudio("sergey")).isEmpty());
     }
 }

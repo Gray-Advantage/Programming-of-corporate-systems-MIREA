@@ -2,12 +2,13 @@ package space.grayt.teremok.cli;
 
 import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.app.ProfileService;
 import space.grayt.teremok.app.VoteResult;
 import space.grayt.teremok.app.VotingService;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
 import space.grayt.teremok.domain.*;
-import space.grayt.teremok.storage.ProfileRepository;
+import space.grayt.teremok.exception.EntityNotFoundException;
 import space.grayt.teremok.textwork.TextWorkCatalog;
 
 import java.nio.file.Path;
@@ -27,7 +28,7 @@ public final class ListenFlow {
     private final PlaybackService playback;
     private final PlaybackConsole playbackConsole;
     private final AudioPlayer player;
-    private final ProfileRepository profiles;
+    private final ProfileService profiles;
 
     public ListenFlow(
             Console console,
@@ -37,7 +38,7 @@ public final class ListenFlow {
             PlaybackService playback,
             PlaybackConsole playbackConsole,
             AudioPlayer player,
-            ProfileRepository profiles
+            ProfileService profiles
     ) {
         this.console = console;
         this.textWorks = textWorks;
@@ -176,14 +177,20 @@ public final class ListenFlow {
     }
 
     private void vote(Profile profile, RatedVoicing target, VoteKind kind) {
-        VoteResult result = voting.vote(target.voicing().id(), profile.id(), kind);
+        VoteResult result;
+        try {
+            result = voting.vote(target.voicing().id(), profile.id(), kind);
+        } catch (EntityNotFoundException e) {
+            console.println(e.getMessage());
+            return;
+        }
         String label = kind == VoteKind.LIKE ? "Лайк" : "Дизлайк";
         switch (result) {
             case ADDED -> console.println(label + " поставлен.");
             case CHANGED -> console.println(label + " заменил прежний голос.");
             case REMOVED -> console.println(label + " снят.");
             case REJECTED_OWN -> console.println("За свою озвучку голосовать нельзя.");
-            case REJECTED_DRAFT -> console.println("За черновик голосовать нельзя.");
+            case REJECTED_DRAFT -> console.println("Голосовать можно только за опубликованную озвучку.");
         }
     }
 

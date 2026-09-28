@@ -7,123 +7,127 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.app.VoicingService;
-import space.grayt.teremok.audio.FakeAudioPlayer;
-import space.grayt.teremok.audio.FakeAudioRecorder;
-import space.grayt.teremok.textwork.TextWorkLibrary;
+import space.grayt.teremok.Fixture;
 import space.grayt.teremok.domain.Profile;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.VoicingRepository;
 
+/**
+ * Text work 2 is Красная Шапочка (the list is ordered by title), voice part 2 is Мама with a single
+ * fragment, voice part 1 is Рассказчик.
+ */
 class RecordFlowTest {
 
-    private static final Profile SERGEY = new Profile("sergey", "Сергей");
-
-    private VoicingRepository repository;
-    private FakeAudioRecorder recorder;
-    private FakeAudioPlayer player;
+    private Fixture fixture;
+    private TextWork shapochka;
+    private Profile sergey;
     private ByteArrayOutputStream out;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        repository = new FileVoicingRepository(dir);
-        recorder = new FakeAudioRecorder();
-        player = new FakeAudioPlayer();
+        fixture = Fixture.withSeedTextWorks(dir);
+        shapochka = fixture.textWork("Красная Шапочка");
+        sergey = fixture.profile("Sergey");
     }
 
     private void run(String input) {
         out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
-        VoicingService voicings = new VoicingService(repository, recorder,
-                Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
-        new RecordFlow(console, new TextWorkLibrary(), voicings, player).run(SERGEY);
+        new RecordFlow(console, fixture.textWorks, fixture.voicings(), fixture.player).run(sergey);
     }
 
     private String printed() {
         return out.toString(UTF_8);
     }
 
-    /** TextWork 1 is Little Red Riding Hood, speaker 2 is Mother with a single line. */
-    @Test
-    void recordsLineAndSavesDraft() {
-        run("1\n2\n\n\n3\n0\n0\n");
-
-        Voicing voicing = repository.find(Voicing.idOf("shapochka", "мама", "sergey")).orElseThrow();
-        assertEquals(1, voicing.recordedFragments().size());
-        assertEquals(1, recorder.recorded().size());
+    private Voicing voicingOf(String voicePartName) {
+        return fixture.voicingRepository
+                .findByVoicePartAndAuthor(fixture.voicePartId(shapochka, voicePartName), "sergey")
+                .orElseThrow(() -> new AssertionError("Нет озвучки " + voicePartName + "\n" + printed()));
     }
 
     @Test
-    void progressIsShownInSpeakerList() {
-        run("1\n2\n\n\n3\n0\n1\n0\n0\n");
+    void recordsFragmentAndSavesDraft() {
+        run("2\n2\n\n\n3\n0\n0\n");
+
+        Voicing voicing = voicingOf("Мама");
+        assertEquals(1, voicing.recordedFragments().size());
+        assertEquals(1, fixture.recorder.recorded().size());
+        assertEquals(Map.of(2, voicing.id() + "/fragment-0002.wav"),
+                fixture.voicingRepository.audioPaths(voicing.id()));
+    }
+
+    @Test
+    void progressIsShownInVoicePartList() {
+        run("2\n2\n\n\n3\n0\n1\n0\n0\n");
 
         assertTrue(printed().contains("1/1"));
     }
 
     @Test
-    void browsingSpeakersCreatesNoDrafts() {
-        run("1\n0\n");
+    void browsingVoicePartsCreatesNoDrafts() {
+        run("2\n0\n");
 
-        assertTrue(repository.findByAuthor("sergey").isEmpty());
+        assertTrue(fixture.voicingRepository.findByAuthor("sergey").isEmpty());
     }
 
     @Test
     void listeningAfterRecordingUsesPlayer() {
-        run("1\n2\n\n\n1\n3\n0\n0\n");
+        run("2\n2\n\n\n1\n3\n0\n0\n");
 
-        assertEquals(1, player.played().size());
+        assertEquals(1, fixture.player.played().size());
     }
 
     @Test
-    void rerecordingReplacesSameLineFile() {
-        run("1\n2\n\n\n2\n\n3\n0\n0\n");
+    void rerecordingReplacesSameFragmentFile() {
+        run("2\n2\n\n\n2\n\n3\n0\n0\n");
 
-        assertEquals(2, recorder.recorded().size());
-        assertEquals(recorder.recorded().get(0), recorder.recorded().get(1));
+        assertEquals(2, fixture.recorder.recorded().size());
+        assertEquals(fixture.recorder.recorded().get(0), fixture.recorder.recorded().get(1));
+        assertEquals(1, fixture.voicingRepository.audioPaths(voicingOf("Мама").id()).size());
     }
 
     @Test
-    void recordedLineCanBeRerecordedFromLineList() {
-        run("1\n2\n\n\n3\n1\n\n\n3\n0\n0\n");
+    void recordedFragmentCanBeRerecordedFromFragmentList() {
+        run("2\n2\n\n\n3\n1\n\n\n3\n0\n0\n");
 
-        assertEquals(2, recorder.recorded().size());
+        assertEquals(2, fixture.recorder.recorded().size());
         assertTrue(printed().contains("[готово]"));
     }
 
     @Test
-    void quittingMidwayKeepsRecordedLinesOnDisk() throws Exception {
-        run("1\n1\n\n\n3\n0\n0\n");
+    void quittingMidwayKeepsRecordedFragments() throws Exception {
+        run("2\n1\n\n\n3\n0\n0\n");
 
-        Path file = repository.audioFile(Voicing.idOf("shapochka", "рассказчик", "sergey"), 1);
-        assertTrue(Files.size(file) > 0);
+        Voicing narrator = voicingOf("Рассказчик");
+        assertEquals(1, narrator.recordedFragments().size());
+        assertTrue(Files.size(fixture.audio.fileFor(narrator.id(), 1)) > 0);
     }
 
     @Test
     void unavailableMicrophoneDoesNotBreakFlow() {
-        recorder.setAvailable(false);
+        fixture.recorder.setAvailable(false);
 
-        run("1\n2\n\n0\n0\n");
+        run("2\n2\n\n0\n0\n");
 
         assertTrue(printed().contains("Микрофон недоступен"));
+        assertTrue(voicingOf("Мама").recordedFragments().isEmpty());
     }
 
     @Test
-    void reportsWhenAllLinesAreRecorded() {
-        run("1\n2\n\n\n3\n0\n2\n0\n0\n");
+    void reportsWhenAllFragmentsAreRecorded() {
+        run("2\n2\n\n\n3\n0\n2\n0\n0\n");
 
         assertTrue(printed().contains("Все фрагменты записаны"));
     }
 
     @Test
-    void lineCountUsesRussianPlurals() {
-        run("1\n0\n0\n");
+    void fragmentCountUsesRussianPlurals() {
+        run("2\n0\n0\n");
 
         String printed = printed();
         assertTrue(printed.contains("Красная Шапочка — 21 фрагмент"), () -> printed);
