@@ -132,12 +132,35 @@ services:
     networks:
       - backend
 
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-teremok}
+      POSTGRES_USER: ${POSTGRES_USER:-teremok}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-teremok}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - database
+
 networks:
   edge:
     name: teremok-edge
   backend:
     name: teremok-backend
     internal: true
+  database:
+    name: teremok-database
 
 volumes:
   kafka-data:
+  postgres-data:
