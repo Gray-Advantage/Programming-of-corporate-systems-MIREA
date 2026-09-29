@@ -1,6 +1,15 @@
 spring:
   application:
     name: text-work-content-service
+  # Each service owns its database on the shared PostgreSQL server; Flyway creates the tables.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://postgres:5432/text_work_content}
+    username: ${DB_USER:teremok}
+    password: ${DB_PASSWORD:teremok}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:

@@ -78,9 +78,14 @@ services:
     image: teremok-catalog-service:local
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_URL: jdbc:postgresql://postgres:5432/catalog
+      DB_USER: ${POSTGRES_USER:-teremok}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-teremok}
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       kafka:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     labels:
       - traefik.enable=true
@@ -99,9 +104,14 @@ services:
     image: teremok-text-work-content-service:local
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DB_URL: jdbc:postgresql://postgres:5432/text_work_content
+      DB_USER: ${POSTGRES_USER:-teremok}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-teremok}
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       kafka:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     labels:
       - traefik.enable=true
@@ -142,6 +152,7 @@ services:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./database/service-databases.sql:/docker-entrypoint-initdb.d/00-service-databases.sql:ro
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
@@ -151,6 +162,7 @@ services:
       retries: 20
     networks:
       - database
+      - backend
 
 networks:
   edge:
