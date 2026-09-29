@@ -3,16 +3,16 @@ package space.grayt.teremok.cli;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import space.grayt.teremok.app.ProfileService;
 import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.storage.ProfileRepository;
 
 /** Profile selection at startup and when switching users. */
 public final class ProfileScreen {
 
     private final Console console;
-    private final ProfileRepository profiles;
+    private final ProfileService profiles;
 
-    public ProfileScreen(Console console, ProfileRepository profiles) {
+    public ProfileScreen(Console console, ProfileService profiles) {
         this.console = console;
         this.profiles = profiles;
     }
@@ -20,7 +20,7 @@ public final class ProfileScreen {
     /** An empty result means quitting the app. */
     public Optional<Profile> choose() {
         while (true) {
-            List<Profile> all = profiles.findAll();
+            List<Profile> all = profiles.all();
             console.println();
             console.println("Кто вы?");
             console.println();

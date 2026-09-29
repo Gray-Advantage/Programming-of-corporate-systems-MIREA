@@ -7,72 +7,58 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import space.grayt.teremok.app.CastBuilder;
-import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.Fixture;
 import space.grayt.teremok.app.VoicingService;
 import space.grayt.teremok.app.VotingService;
-import space.grayt.teremok.audio.FakeAudioPlayer;
-import space.grayt.teremok.audio.FakeAudioRecorder;
-import space.grayt.teremok.textwork.TextWorkLibrary;
-import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Profile;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
-import space.grayt.teremok.storage.FileProfileRepository;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.ProfileRepository;
-import space.grayt.teremok.storage.VoicingRepository;
+import space.grayt.teremok.domain.VoteKind;
 
 class MyVoicingsScreenTest {
 
-    private static final Profile SERGEY = new Profile("sergey", "Сергей");
-    private static final TextWorkLibrary BOOKS = new TextWorkLibrary();
-    private static final String MAMA_ID = Voicing.idOf("shapochka", "мама", "sergey");
-
-    private VoicingRepository repository;
-    private ProfileRepository profiles;
-    private FakeAudioPlayer player;
-    private FakeAudioRecorder recorder;
+    private Fixture fixture;
+    private TextWork shapochka;
+    private Profile sergey;
     private ByteArrayOutputStream out;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        repository = new FileVoicingRepository(dir);
-        profiles = new FileProfileRepository(dir);
-        player = new FakeAudioPlayer();
-        recorder = new FakeAudioRecorder();
+        fixture = Fixture.withSeedTextWorks(dir);
+        shapochka = fixture.textWork("Красная Шапочка");
+        sergey = fixture.profile("Sergey");
     }
 
-    /** The Mother voicing with its only line 2, fully recorded. */
-    private Voicing completeMama() throws Exception {
-        Voicing voicing = Voicing.newDraft("shapochka", "мама", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
-        repository.save(voicing);
-        Path file = repository.audioFile(voicing.id(), 2);
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, "звук");
-        return voicing;
+    /** The Mother voicing with its only fragment 2, fully recorded. */
+    private Voicing completeMama(VoicingStatus status) {
+        return fixture.voicing(shapochka, "Мама", "sergey", status);
+    }
+
+    /** A draft of a Little Red Riding Hood voice part with its first fragments recorded. */
+    private Voicing draft(String voicePartName, int recorded) {
+        return fixture.recordFirst(fixture.draft(shapochka, voicePartName, "sergey"), shapochka, recorded);
+    }
+
+    private VoicingStatus statusOf(Voicing voicing) {
+        return fixture.reload(voicing).status();
     }
 
     private void run(String input) {
         out = new ByteArrayOutputStream();
         Console console = new Console(new ByteArrayInputStream(input.getBytes(UTF_8)), out);
-        VoicingService voicings = new VoicingService(repository, recorder,
-                Clock.fixed(Instant.parse("2026-09-07T12:00:00Z"), ZoneOffset.UTC));
-        VotingService voting = new VotingService(repository);
-        PlaybackService playback = new PlaybackService(repository);
-        // Zero reading pause: the test must not actually wait for unvoiced lines.
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, duration -> Duration.ZERO);
-        RecordFlow record = new RecordFlow(console, BOOKS, voicings, player);
-        new MyVoicingsScreen(console, BOOKS, voicings, voting, new CastBuilder(voting), playback,
-                playbackConsole, record).run(SERGEY);
+        VoicingService voicings = fixture.voicings();
+        VotingService voting = fixture.voting();
+        // Zero reading pause: the test must not actually wait for unvoiced fragments.
+        PlaybackConsole playbackConsole = new PlaybackConsole(console, fixture.player, fixture.profiles(),
+                duration -> Duration.ZERO);
+        RecordFlow record = new RecordFlow(console, fixture.textWorks, voicings, fixture.player);
+        new MyVoicingsScreen(console, fixture.textWorks, voicings, voting, fixture.castBuilder(), fixture.playback(),
+                playbackConsole, record).run(sergey);
     }
 
     private String printed() {
@@ -87,107 +73,141 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void showsBookSpeakerStatusAndProgress() throws Exception {
-        completeMama();
+    void showsTextWorkVoicePartStatusProgressAndScore() {
+        completeMama(VoicingStatus.DRAFT);
 
         run("0\n");
 
-        assertTrue(printed().contains("Красная Шапочка"));
-        assertTrue(printed().contains("Мама"));
-        assertTrue(printed().contains("черновик"));
-        assertTrue(printed().contains("1/1"));
+        assertTrue(printed().contains("Красная Шапочка · Мама  черновик  1/1  [0]"), this::printed);
     }
 
     @Test
-    void publishesCompleteVoicing() throws Exception {
-        completeMama();
+    void statusesAreShownInRussian() {
+        completeMama(VoicingStatus.PUBLISHED);
+        fixture.withStatus(draft("Бабушка", 2), VoicingStatus.ARCHIVED);
+        draft("Волк", 1);
+
+        run("0\n");
+
+        assertTrue(printed().contains("Мама  опубликовано"), this::printed);
+        assertTrue(printed().contains("Бабушка  снято с публикации"), this::printed);
+        assertTrue(printed().contains("Волк  черновик"), this::printed);
+    }
+
+    @Test
+    void publishesCompleteVoicing() {
+        Voicing mama = completeMama(VoicingStatus.DRAFT);
 
         run("1\n3\n0\n0\n");
 
-        assertEquals(VoicingStatus.PUBLISHED, repository.find(MAMA_ID).orElseThrow().status());
+        assertEquals(VoicingStatus.PUBLISHED, statusOf(mama));
+        assertTrue(printed().contains("Роль опубликована."), this::printed);
     }
 
     @Test
-    void incompleteVoicingIsNotPublished() throws Exception {
-        Voicing voicing = Voicing.newDraft("shapochka", "шапочка", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
-        repository.save(voicing);
+    void incompleteVoicingIsNotPublished() {
+        Voicing hood = draft("Шапочка", 0);
 
         run("1\n3\n0\n0\n");
 
-        assertEquals(VoicingStatus.DRAFT, repository.find(voicing.id()).orElseThrow().status());
-        assertTrue(printed().contains("полностью записанную"));
+        assertEquals(VoicingStatus.DRAFT, statusOf(hood));
+        assertTrue(printed().contains("полностью записанную"), this::printed);
     }
 
     @Test
-    void unpublishesVoicing() throws Exception {
-        repository.save(completeMama().withStatus(VoicingStatus.PUBLISHED));
+    void publishedVoicingIsTakenDownIntoArchiveWithVotesKept() {
+        Voicing mama = completeMama(VoicingStatus.PUBLISHED);
+        fixture.vote(mama, VoteKind.LIKE, "masha");
 
         run("1\n3\n0\n0\n");
 
-        assertEquals(VoicingStatus.DRAFT, repository.find(MAMA_ID).orElseThrow().status());
+        assertEquals(VoicingStatus.ARCHIVED, statusOf(mama));
+        assertEquals(1, fixture.voicingRepository.votes(mama.id()).size());
+        assertTrue(printed().contains("3  Снять с публикации"), this::printed);
+        assertTrue(printed().contains("Роль снята с публикации"), this::printed);
     }
 
     @Test
-    void playsWholeVoicingEvenAsDraft() throws Exception {
-        completeMama();
+    void archivedVoicingIsReturnedToPublication() {
+        Voicing mama = completeMama(VoicingStatus.ARCHIVED);
+
+        run("1\n3\n0\n0\n");
+
+        assertEquals(VoicingStatus.PUBLISHED, statusOf(mama));
+        assertTrue(printed().contains("3  Вернуть в публикацию"), this::printed);
+        assertTrue(printed().contains("Роль снова опубликована."), this::printed);
+    }
+
+    @Test
+    void playsWholeVoicingEvenAsDraft() {
+        completeMama(VoicingStatus.DRAFT);
 
         run("1\n2\n");
 
-        assertEquals(1, player.played().size());
+        assertEquals(1, fixture.player.played().size());
     }
 
     @Test
-    void deletesVoicingAfterConfirmation() throws Exception {
-        completeMama();
+    void deletesDraftAfterConfirmation() {
+        Voicing mama = completeMama(VoicingStatus.DRAFT);
 
         run("1\n4\nда\n0\n");
 
-        assertTrue(repository.find(MAMA_ID).isEmpty());
+        assertTrue(fixture.voicingRepository.find(mama.id()).isEmpty());
+        assertFalse(Files.exists(fixture.audio.fileFor(mama.id(), 2).getParent()));
+        assertTrue(printed().contains("Роль удалена."), this::printed);
     }
 
     @Test
-    void voicingStaysWithoutConfirmation() throws Exception {
-        completeMama();
+    void deletesArchivedVoicingAfterConfirmation() {
+        Voicing mama = completeMama(VoicingStatus.ARCHIVED);
+
+        run("1\n4\nда\n0\n");
+
+        assertTrue(fixture.voicingRepository.find(mama.id()).isEmpty());
+    }
+
+    @Test
+    void publishedVoicingIsNotDeleted() {
+        Voicing mama = completeMama(VoicingStatus.PUBLISHED);
+
+        run("1\n4\n0\n0\n");
+
+        assertTrue(fixture.voicingRepository.find(mama.id()).isPresent());
+        assertTrue(printed().contains("Сначала снимите её с публикации"), this::printed);
+        assertFalse(printed().contains("да / нет"), this::printed);
+    }
+
+    @Test
+    void voicingStaysWithoutConfirmation() {
+        Voicing mama = completeMama(VoicingStatus.DRAFT);
 
         run("1\n4\nнет\n0\n0\n");
 
-        assertTrue(repository.find(MAMA_ID).isPresent());
-    }
-
-    /** A draft of a Little Red Riding Hood speaker whose first recorded lines are recorded. */
-    private Voicing draft(String speakerId, int recorded) throws Exception {
-        Voicing voicing = Voicing.newDraft("shapochka", speakerId, "sergey", Instant.parse("2026-09-01T10:00:00Z"));
-        repository.save(voicing);
-        List<TextWorkFragment> lines = BOOKS.find("shapochka").orElseThrow().fragmentsOf(speakerId);
-        for (TextWorkFragment line : lines.subList(0, recorded)) {
-            Path file = repository.audioFile(voicing.id(), line.number());
-            Files.createDirectories(file.getParent());
-            Files.writeString(file, "звук");
-        }
-        return voicing;
+        assertTrue(fixture.voicingRepository.find(mama.id()).isPresent());
     }
 
     @Test
-    void publishAllPublishesEveryFullyRecordedVoicing() throws Exception {
-        Voicing mama = draft("мама", 1);
-        Voicing grandma = draft("бабушка", 2);
-        Voicing hood = draft("шапочка", 1);
+    void publishAllPublishesEveryFullyRecordedVoicing() {
+        Voicing mama = draft("Мама", 1);
+        Voicing grandma = draft("Бабушка", 2);
+        Voicing hood = draft("Шапочка", 1);
 
         run("a\n0\n");
 
-        assertEquals(VoicingStatus.PUBLISHED, repository.find(mama.id()).orElseThrow().status(), this::printed);
-        assertEquals(VoicingStatus.PUBLISHED, repository.find(grandma.id()).orElseThrow().status(), this::printed);
-        assertEquals(VoicingStatus.DRAFT, repository.find(hood.id()).orElseThrow().status(), this::printed);
+        assertEquals(VoicingStatus.PUBLISHED, statusOf(mama), this::printed);
+        assertEquals(VoicingStatus.PUBLISHED, statusOf(grandma), this::printed);
+        assertEquals(VoicingStatus.DRAFT, statusOf(hood), this::printed);
         assertTrue(printed().contains("Опубликовано: 2 роли"), this::printed);
         assertTrue(printed().contains("Шапочка  черновик  1/7"), this::printed);
     }
 
     @Test
-    void publishAllShowsNumberOfReadyDrafts() throws Exception {
-        draft("мама", 1);
-        draft("бабушка", 2);
-        repository.save(draft("волк", 6).withStatus(VoicingStatus.PUBLISHED));
-        draft("шапочка", 1);
+    void publishAllShowsNumberOfReadyDrafts() {
+        draft("Мама", 1);
+        draft("Бабушка", 2);
+        fixture.withStatus(draft("Волк", 6), VoicingStatus.PUBLISHED);
+        draft("Шапочка", 1);
 
         run("0\n");
 
@@ -195,8 +215,8 @@ class MyVoicingsScreenTest {
     }
 
     @Test
-    void publishAllIsHiddenWithoutReadyDrafts() throws Exception {
-        draft("шапочка", 1);
+    void publishAllIsHiddenWithoutReadyDrafts() {
+        draft("Шапочка", 1);
 
         run("0\n");
 

@@ -17,7 +17,7 @@ public final class CastBuilder {
     }
 
     public Cast best(TextWork textWork) {
-        Map<String, String> chosen = new LinkedHashMap<>();
+        Map<String, Long> chosen = new LinkedHashMap<>();
         for (VoicePart voicePart : textWork.voiceParts()) {
             voting.ranked(textWork.id(), voicePart.id()).stream()
                     .findFirst()

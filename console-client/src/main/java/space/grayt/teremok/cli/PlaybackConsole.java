@@ -4,29 +4,29 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.UnaryOperator;
 import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.app.ProfileService;
 import space.grayt.teremok.app.PlaybackStep;
 import space.grayt.teremok.audio.AudioPlayer;
 import space.grayt.teremok.audio.AudioUnavailableException;
-import space.grayt.teremok.storage.ProfileRepository;
 
 /** Plays a ready plan: audio where there is some, text with a pause where there is none. */
 public final class PlaybackConsole {
 
     private final Console console;
     private final AudioPlayer player;
-    private final ProfileRepository profiles;
+    private final ProfileService profiles;
     private final UnaryOperator<Duration> pauseTransform;
 
-    public PlaybackConsole(Console console, AudioPlayer player, ProfileRepository profiles) {
+    public PlaybackConsole(Console console, AudioPlayer player, ProfileService profiles) {
         this(console, player, profiles, UnaryOperator.identity());
     }
 
     /**
      * pauseTransform is applied to the reading pause before sleeping so that tests do not wait in real
-     * time. Production code does not need it: {@link #PlaybackConsole(Console, AudioPlayer, ProfileRepository)}
+     * time. Production code does not need it: {@link #PlaybackConsole(Console, AudioPlayer, ProfileService)}
      * passes the identity function.
      */
-    public PlaybackConsole(Console console, AudioPlayer player, ProfileRepository profiles,
+    public PlaybackConsole(Console console, AudioPlayer player, ProfileService profiles,
             UnaryOperator<Duration> pauseTransform) {
         this.console = console;
         this.player = player;

@@ -8,50 +8,48 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import space.grayt.teremok.Fixture;
 import space.grayt.teremok.domain.RatedVoicing;
+import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.VoteKind;
-import space.grayt.teremok.storage.FileVoicingRepository;
-import space.grayt.teremok.storage.VoicingRepository;
+import space.grayt.teremok.exception.EntityNotFoundException;
 
 class VotingServiceTest {
 
-    private VoicingRepository repository;
+    private Fixture fixture;
+    private TextWork book;
+    private String wolf;
     private VotingService voting;
 
     @BeforeEach
     void setUp(@TempDir Path dir) {
-        repository = new FileVoicingRepository(dir);
-        voting = new VotingService(repository);
+        fixture = Fixture.empty(dir);
+        book = fixture.addTextWork("Красная Шапочка", "Волк: Куда ты идёшь?", "Шапочка: К бабушке.");
+        wolf = fixture.voicePartId(book, "Волк");
+        fixture.profile("masha");
+        voting = fixture.voting();
     }
 
     private Voicing published(String author, String createdAt) {
-        Voicing voicing = Voicing.newDraft("shapochka", "волк", author, Instant.parse(createdAt))
-                .withStatus(VoicingStatus.PUBLISHED);
-        repository.save(voicing);
-        return voicing;
-    }
-
-    private void likes(Voicing voicing, int count) {
-        for (int i = 0; i < count; i++) {
-            repository.putVote(voicing.id(), "fan" + i, VoteKind.LIKE);
-        }
+        return fixture.withStatus(fixture.draft(book, "Волк", author, Instant.parse(createdAt)),
+                VoicingStatus.PUBLISHED);
     }
 
     private void dislikes(Voicing voicing, int count) {
         for (int i = 0; i < count; i++) {
-            repository.putVote(voicing.id(), "hater" + i, VoteKind.DISLIKE);
+            fixture.vote(voicing, VoteKind.DISLIKE, "hater" + i);
         }
     }
 
     @Test
     void scoreIsLikesMinusDislikes() {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
-        likes(voicing, 5);
+        fixture.likes(voicing, 5);
         dislikes(voicing, 2);
 
-        RatedVoicing rated = voting.rate(repository.find(voicing.id()).orElseThrow());
+        RatedVoicing rated = voting.rate(voicing);
 
         assertEquals(5, rated.likes());
         assertEquals(2, rated.dislikes());
@@ -62,10 +60,10 @@ class VotingServiceTest {
     void sortsByScoreDescending() {
         Voicing weak = published("weak", "2026-09-01T10:00:00Z");
         Voicing strong = published("strong", "2026-09-01T10:00:00Z");
-        likes(weak, 1);
-        likes(strong, 4);
+        fixture.likes(weak, 1);
+        fixture.likes(strong, 4);
 
-        List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
+        List<RatedVoicing> ranked = voting.ranked(book.id(), wolf);
 
         assertEquals("strong", ranked.get(0).voicing().authorId());
         assertEquals("weak", ranked.get(1).voicing().authorId());
@@ -75,14 +73,11 @@ class VotingServiceTest {
     void onEqualScoreMoreLikesRanksHigher() {
         Voicing quiet = published("quiet", "2026-09-01T10:00:00Z");
         Voicing loud = published("loud", "2026-09-01T10:00:00Z");
-        likes(quiet, 1);
-        dislikes(quiet, 0);
-        likes(loud, 5);
+        fixture.likes(quiet, 1);
+        fixture.likes(loud, 5);
         dislikes(loud, 4);
 
-        List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
-
-        assertEquals("loud", ranked.get(0).voicing().authorId());
+        assertEquals("loud", voting.ranked(book.id(), wolf).get(0).voicing().authorId());
     }
 
     @Test
@@ -90,17 +85,16 @@ class VotingServiceTest {
         published("old", "2026-09-01T10:00:00Z");
         published("new", "2026-09-05T10:00:00Z");
 
-        List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
-
-        assertEquals("new", ranked.get(0).voicing().authorId());
+        assertEquals("new", voting.ranked(book.id(), wolf).get(0).voicing().authorId());
     }
 
     @Test
-    void draftsAreNotRanked() {
-        repository.save(Voicing.newDraft("shapochka", "волк", "draft", Instant.parse("2026-09-01T10:00:00Z")));
+    void draftsAndArchivedAreNotRanked() {
+        fixture.draft(book, "Волк", "draft");
+        fixture.withStatus(fixture.draft(book, "Волк", "archived"), VoicingStatus.ARCHIVED);
         published("ready", "2026-09-01T10:00:00Z");
 
-        List<RatedVoicing> ranked = voting.ranked("shapochka", "волк");
+        List<RatedVoicing> ranked = voting.ranked(book.id(), wolf);
 
         assertEquals(1, ranked.size());
         assertEquals("ready", ranked.get(0).voicing().authorId());
@@ -130,6 +124,7 @@ class VotingServiceTest {
 
         assertEquals(VoteResult.CHANGED, voting.vote(voicing.id(), "masha", VoteKind.DISLIKE));
         assertEquals(VoteKind.DISLIKE, voting.voteOf(voicing.id(), "masha").orElseThrow());
+        assertEquals(1, fixture.voicingRepository.votes(voicing.id()).size());
     }
 
     @Test
@@ -137,20 +132,26 @@ class VotingServiceTest {
         Voicing voicing = published("sergey", "2026-09-01T10:00:00Z");
 
         assertEquals(VoteResult.REJECTED_OWN, voting.vote(voicing.id(), "sergey", VoteKind.LIKE));
-        assertTrue(repository.votes(voicing.id()).isEmpty());
+        assertTrue(fixture.voicingRepository.votes(voicing.id()).isEmpty());
     }
 
     @Test
     void votingForDraftIsRejected() {
-        Voicing draft = Voicing.newDraft("shapochka", "волк", "sergey", Instant.parse("2026-09-01T10:00:00Z"));
-        repository.save(draft);
+        Voicing draft = fixture.draft(book, "Волк", "sergey");
 
         assertEquals(VoteResult.REJECTED_DRAFT, voting.vote(draft.id(), "masha", VoteKind.LIKE));
     }
 
     @Test
+    void votingForArchivedIsRejectedLikeForDraft() {
+        Voicing archived = fixture.withStatus(fixture.draft(book, "Волк", "sergey"), VoicingStatus.ARCHIVED);
+
+        assertEquals(VoteResult.REJECTED_DRAFT, voting.vote(archived.id(), "masha", VoteKind.LIKE));
+        assertTrue(fixture.voicingRepository.votes(archived.id()).isEmpty());
+    }
+
+    @Test
     void votingForMissingVoicingIsAnError() {
-        assertThrows(IllegalArgumentException.class,
-                () -> voting.vote("нет__такой__роли", "masha", VoteKind.LIKE));
+        assertThrows(EntityNotFoundException.class, () -> voting.vote(999L, "masha", VoteKind.LIKE));
     }
 }

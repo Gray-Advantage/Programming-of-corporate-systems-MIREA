@@ -1,105 +1,108 @@
 package space.grayt.teremok;
 
-import space.grayt.teremok.app.CastBuilder;
-import space.grayt.teremok.app.PlaybackService;
-import space.grayt.teremok.app.VoicingService;
-import space.grayt.teremok.app.VotingService;
-import space.grayt.teremok.audio.AudioPlayer;
-import space.grayt.teremok.audio.AudioRecorder;
-import space.grayt.teremok.cli.*;
-import space.grayt.teremok.domain.Profile;
-import space.grayt.teremok.storage.*;
-import space.grayt.teremok.textwork.TextWorkCatalog;
-import space.grayt.teremok.textwork.TextWorkLibrary;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.function.UnaryOperator;
+import space.grayt.teremok.app.CastBuilder;
+import space.grayt.teremok.app.PlaybackService;
+import space.grayt.teremok.app.ProfileService;
+import space.grayt.teremok.app.VoicingService;
+import space.grayt.teremok.app.VotingService;
+import space.grayt.teremok.audio.AudioPlayer;
+import space.grayt.teremok.audio.AudioRecorder;
+import space.grayt.teremok.cli.Console;
+import space.grayt.teremok.cli.ListenFlow;
+import space.grayt.teremok.cli.MainMenu;
+import space.grayt.teremok.cli.MyVoicingsScreen;
+import space.grayt.teremok.cli.PlaybackConsole;
+import space.grayt.teremok.cli.ProfileScreen;
+import space.grayt.teremok.cli.RecordFlow;
+import space.grayt.teremok.db.DatabaseManager;
+import space.grayt.teremok.domain.Profile;
+import space.grayt.teremok.exception.TeremokException;
+import space.grayt.teremok.storage.AudioStorage;
+import space.grayt.teremok.storage.JdbcProfileRepository;
+import space.grayt.teremok.storage.JdbcVoicingRepository;
+import space.grayt.teremok.storage.ProfileRepository;
+import space.grayt.teremok.storage.StorageException;
+import space.grayt.teremok.storage.VoicingRepository;
+import space.grayt.teremok.textwork.TextWorkCatalog;
 
 /**
- * Wires the dependencies and runs the outer application loop.
+ * Wires the layers — console screens, services, repositories over JDBC — and runs the outer
+ * application loop.
  */
 public final class App {
 
-    private final Path dataDir;
+    private final DatabaseManager database;
+    private final TextWorkCatalog textWorks;
+    private final AudioStorage audio;
     private final Console console;
     private final AudioRecorder recorder;
     private final AudioPlayer player;
     private final Clock clock;
     private final UnaryOperator<Duration> pauseTransform;
-    private final TextWorkCatalog textWorks;
 
-    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock) {
-        this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), new TextWorkLibrary());
-    }
-
-    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock, TextWorkCatalog textWorks) {
-        this(dataDir, console, recorder, player, clock, UnaryOperator.identity(), textWorks);
+    public App(DatabaseManager database, TextWorkCatalog textWorks, AudioStorage audio, Console console,
+               AudioRecorder recorder, AudioPlayer player, Clock clock) {
+        this(database, textWorks, audio, console, recorder, player, clock, UnaryOperator.identity());
     }
 
     /**
      * pauseTransform is applied to the reading pauses of unvoiced lines. It exists for tests only,
      * so the suite does not sleep in real time; the production Main uses the constructor without it.
      */
-    public App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
-               UnaryOperator<Duration> pauseTransform) {
-        this(dataDir, console, recorder, player, clock, pauseTransform, new TextWorkLibrary());
-    }
-
-    App(Path dataDir, Console console, AudioRecorder recorder, AudioPlayer player, Clock clock,
-        UnaryOperator<Duration> pauseTransform, TextWorkCatalog textWorks) {
-        this.dataDir = dataDir;
+    public App(DatabaseManager database, TextWorkCatalog textWorks, AudioStorage audio, Console console,
+               AudioRecorder recorder, AudioPlayer player, Clock clock, UnaryOperator<Duration> pauseTransform) {
+        this.database = database;
+        this.textWorks = textWorks;
+        this.audio = audio;
         this.console = console;
         this.recorder = recorder;
         this.player = player;
         this.clock = clock;
         this.pauseTransform = pauseTransform;
-        this.textWorks = textWorks;
     }
 
     public void run() {
         try {
-            Files.createDirectories(dataDir);
-        } catch (IOException e) {
-            console.println("Нет доступа к каталогу данных " + dataDir + ": " + e.getMessage());
+            database.check();
+        } catch (StorageException e) {
+            console.println(e.getMessage());
             return;
         }
 
-        textWorks.warnings().forEach(console::println);
-
-        ProfileRepository profiles = new FileProfileRepository(dataDir);
-        VoicingRepository voicings = new FileVoicingRepository(dataDir);
-        VotingService voting = new VotingService(voicings);
-        CastBuilder castBuilder = new CastBuilder(voting);
-        VoicingService voicingService = new VoicingService(voicings, recorder, clock);
-        PlaybackService playback = new PlaybackService(voicings);
-        PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, pauseTransform);
-
-        ProfileScreen profileScreen = new ProfileScreen(console, profiles);
-        RecordFlow record = new RecordFlow(console, textWorks, voicingService, player);
-        ListenFlow listen = new ListenFlow(console, textWorks, castBuilder, voting, playback, playbackConsole, player, profiles);
-        MyVoicingsScreen mine = new MyVoicingsScreen(console, textWorks, voicingService, voting, castBuilder, playback, playbackConsole, record);
-        MainMenu menu = new MainMenu(console, listen, record, mine, voicings);
-
         try {
+            textWorks.warnings().forEach(console::println);
+
+            ProfileRepository profileRepository = new JdbcProfileRepository(database);
+            VoicingRepository voicingRepository = new JdbcVoicingRepository(database);
+            ProfileService profiles = new ProfileService(profileRepository);
+            VotingService voting = new VotingService(voicingRepository);
+            CastBuilder castBuilder = new CastBuilder(voting);
+            VoicingService voicings = new VoicingService(voicingRepository, textWorks, audio, recorder, clock);
+            PlaybackService playback = new PlaybackService(voicingRepository, audio);
+            PlaybackConsole playbackConsole = new PlaybackConsole(console, player, profiles, pauseTransform);
+
+            ProfileScreen profileScreen = new ProfileScreen(console, profiles);
+            RecordFlow record = new RecordFlow(console, textWorks, voicings, player);
+            ListenFlow listen = new ListenFlow(console, textWorks, castBuilder, voting, playback, playbackConsole,
+                    player, profiles);
+            MyVoicingsScreen mine = new MyVoicingsScreen(console, textWorks, voicings, voting, castBuilder, playback,
+                    playbackConsole, record);
+            MainMenu menu = new MainMenu(console, listen, record, mine);
+
             while (true) {
                 Optional<Profile> profile = profileScreen.choose();
-                if (profile.isEmpty()) {
-                    console.println("До встречи.");
-                    return;
-                }
-                if (menu.run(profile.get()) == MainMenu.MenuExit.QUIT) {
+                if (profile.isEmpty() || menu.run(profile.get()) == MainMenu.MenuExit.QUIT) {
                     console.println("До встречи.");
                     return;
                 }
             }
-        } catch (StorageException e) {
-            // StorageException messages are already written for people (spec §8), so print them as is
-            // and shut down normally instead of letting a raw exception escape the cli layer.
+        } catch (TeremokException e) {
+            // Own exceptions carry a message written for people, so print it as is and shut down
+            // normally instead of letting a raw exception escape the cli layer.
             console.println(e.getMessage());
             console.println("Работа завершена.");
         } catch (RuntimeException e) {

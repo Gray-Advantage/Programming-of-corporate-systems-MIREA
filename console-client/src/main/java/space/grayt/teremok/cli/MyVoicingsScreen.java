@@ -3,6 +3,8 @@ package space.grayt.teremok.cli;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
+import java.util.stream.Collectors;
 import space.grayt.teremok.app.CastBuilder;
 import space.grayt.teremok.app.PlaybackService;
 import space.grayt.teremok.app.VoicingService;
@@ -13,6 +15,8 @@ import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.exception.BusinessRuleException;
+import space.grayt.teremok.exception.EntityNotFoundException;
 import space.grayt.teremok.textwork.TextWorkCatalog;
 
 /** The user's own voicings and actions on them. */
@@ -58,7 +62,7 @@ public final class MyVoicingsScreen {
                 console.println("  " + (i + 1) + "  " + describe(mine.get(i)));
             }
             console.println();
-            List<Voicing> ready = readyToPublish(mine);
+            List<Voicing> ready = voicings.readyToPublish(mine);
             if (!ready.isEmpty()) {
                 console.println("  a  Опубликовать все готовые (" + ready.size() + ")");
             }
@@ -90,34 +94,35 @@ public final class MyVoicingsScreen {
                 .map(found -> voicings.recordedCount(voicing, found) + "/"
                         + found.fragmentsOf(voicing.voicePartId()).size())
                 .orElse("?");
-        String status = voicing.status() == VoicingStatus.PUBLISHED ? "опубликовано" : "черновик";
-        String rating = voting.rated(voicing.id())
-                .map(rated -> "  [" + (rated.score() > 0 ? "+" + rated.score() : rated.score()) + "]")
-                .orElse("");
-        return textWorkTitle + " · " + voicePartName + "  " + status + "  " + progress + rating;
+        int score = voting.rate(voicing).score();
+        String rating = "  [" + (score > 0 ? "+" + score : score) + "]";
+        return textWorkTitle + " · " + voicePartName + "  " + statusLabel(voicing.status()) + "  " + progress + rating;
     }
 
-    /** Drafts with every fragment recorded; these can be published all at once. */
-    private List<Voicing> readyToPublish(List<Voicing> mine) {
-        return mine.stream()
-                .filter(voicing -> voicing.status() == VoicingStatus.DRAFT)
-                .filter(voicing -> textWorks.find(voicing.textWorkId())
-                        .map(textWork -> voicings.isComplete(voicing, textWork))
-                        .orElse(false))
-                .toList();
+    private static String statusLabel(VoicingStatus status) {
+        return switch (status) {
+            case DRAFT -> "черновик";
+            case PUBLISHED -> "опубликовано";
+            case ARCHIVED -> "снято с публикации";
+        };
     }
 
+    /** All ready drafts are published in one transaction: either every one of them or none. */
     private void publishAll(List<Voicing> mine, List<Voicing> ready) {
         if (ready.isEmpty()) {
             console.println("Нет черновиков, у которых записаны все фрагменты.");
             return;
         }
-        for (Voicing voicing : ready) {
-            voicings.publish(voicing, textWorks.find(voicing.textWorkId()).orElseThrow());
+        try {
+            voicings.publishAll(ready);
+        } catch (BusinessRuleException | EntityNotFoundException e) {
+            console.println(e.getMessage());
+            return;
         }
         console.println("Опубликовано: " + Plural.of(ready.size(), "роль", "роли", "ролей") + ".");
+        Set<Long> published = ready.stream().map(Voicing::id).collect(Collectors.toSet());
         List<Voicing> unfinished = mine.stream()
-                .filter(voicing -> voicing.status() == VoicingStatus.DRAFT && !ready.contains(voicing))
+                .filter(voicing -> voicing.status() == VoicingStatus.DRAFT && !published.contains(voicing.id()))
                 .toList();
         if (!unfinished.isEmpty()) {
             console.println("Остались черновиками — записаны не все фрагменты:");
@@ -132,21 +137,26 @@ public final class MyVoicingsScreen {
             return;
         }
         while (true) {
-            Voicing current = voicings.reload(voicing);
+            Voicing current;
+            try {
+                current = voicings.reload(voicing);
+            } catch (EntityNotFoundException e) {
+                console.println(e.getMessage());
+                return;
+            }
             console.println();
             console.println(describe(current));
             console.println();
             console.println("  1  Продолжить запись");
             console.println("  2  Прослушать роль целиком");
-            console.println("  3  " + (current.status() == VoicingStatus.PUBLISHED
-                    ? "Снять с публикации" : "Опубликовать"));
+            console.println("  3  " + publicationAction(current.status()));
             console.println("  4  Удалить");
             console.println("  0  Назад");
 
             switch (console.ask("> ")) {
                 case "1" -> record.recordRole(textWork.get(), current);
                 case "2" -> playRole(textWork.get(), current);
-                case "3" -> togglePublication(textWork.get(), current);
+                case "3" -> changePublication(textWork.get(), current);
                 case "4" -> {
                     if (deleteConfirmed(current)) {
                         return;
@@ -166,27 +176,55 @@ public final class MyVoicingsScreen {
         playbackConsole.play(playback.plan(textWork, cast));
     }
 
-    private void togglePublication(TextWork textWork, Voicing voicing) {
-        if (voicing.status() == VoicingStatus.PUBLISHED) {
-            voicings.unpublish(voicing);
-            console.println("Роль снята с публикации. Голоса сохранены.");
-            return;
-        }
+    private static String publicationAction(VoicingStatus status) {
+        return switch (status) {
+            case DRAFT -> "Опубликовать";
+            case PUBLISHED -> "Снять с публикации";
+            case ARCHIVED -> "Вернуть в публикацию";
+        };
+    }
+
+    private void changePublication(TextWork textWork, Voicing voicing) {
         try {
-            voicings.publish(voicing, textWork);
-            console.println("Роль опубликована.");
-        } catch (IllegalStateException e) {
+            switch (voicing.status()) {
+                case DRAFT -> {
+                    voicings.publish(voicing, textWork);
+                    console.println("Роль опубликована.");
+                }
+                case PUBLISHED -> {
+                    voicings.archive(voicing);
+                    console.println("Роль снята с публикации. Голоса сохранены, но слушателям она больше не предлагается.");
+                }
+                case ARCHIVED -> {
+                    voicings.publish(voicing, textWork);
+                    console.println("Роль снова опубликована.");
+                }
+            }
+        } catch (BusinessRuleException | EntityNotFoundException e) {
             console.println(e.getMessage());
         }
     }
 
+    /** true means the voicing is gone and its screen should close. */
     private boolean deleteConfirmed(Voicing voicing) {
-        String answer = console.ask("Удалить роль вместе с записями? да / нет: ");
+        if (!voicings.canDelete(voicing)) {
+            console.println("Опубликованную роль удалить нельзя. Сначала снимите её с публикации.");
+            return false;
+        }
+        String answer = console.ask("Удалить роль вместе с записями и голосами? да / нет: ");
         if (!answer.equalsIgnoreCase("да")) {
             console.println("Оставляем как есть.");
             return false;
         }
-        voicings.delete(voicing);
+        try {
+            voicings.delete(voicing);
+        } catch (BusinessRuleException e) {
+            console.println(e.getMessage());
+            return false;
+        } catch (EntityNotFoundException e) {
+            console.println(e.getMessage());
+            return true;
+        }
         console.println("Роль удалена.");
         return true;
     }

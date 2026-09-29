@@ -1,5 +1,6 @@
 package space.grayt.teremok.cli;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -12,6 +13,7 @@ import space.grayt.teremok.domain.TextWork;
 import space.grayt.teremok.domain.TextWorkFragment;
 import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicePart;
+import space.grayt.teremok.exception.TeremokException;
 import space.grayt.teremok.textwork.TextWorkCatalog;
 
 /** Voicing a voice part fragment by fragment, saving each recording immediately. */
@@ -150,7 +152,7 @@ public final class RecordFlow {
         return pick(all);
     }
 
-    /** false means recording failed and the voicing screen should close. */
+    /** false means recording failed and the voicing screen should close. The row is saved by stop(). */
     private boolean record(Voicing voicing, TextWorkFragment fragment) {
         try {
             RecordingSession session = voicings.startRecording(voicing, fragment.number());
@@ -162,15 +164,20 @@ public final class RecordFlow {
                 console.println("Запись остановлена по лимиту в 2 минуты.");
             }
             return true;
-        } catch (AudioUnavailableException e) {
+        } catch (AudioUnavailableException | TeremokException e) {
             console.println(e.getMessage());
             return false;
         }
     }
 
     private void playRecorded(Voicing voicing, TextWorkFragment fragment) {
+        Optional<Path> file = voicings.audioFile(voicing, fragment.number());
+        if (file.isEmpty()) {
+            console.println("Этот фрагмент ещё не записан.");
+            return;
+        }
         try {
-            player.play(voicings.audioFile(voicing, fragment.number()));
+            player.play(file.get());
         } catch (AudioUnavailableException e) {
             console.println(e.getMessage());
         }

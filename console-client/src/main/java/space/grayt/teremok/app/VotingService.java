@@ -7,6 +7,7 @@ import space.grayt.teremok.domain.Voicing;
 import space.grayt.teremok.domain.VoicingStatus;
 import space.grayt.teremok.domain.Vote;
 import space.grayt.teremok.domain.VoteKind;
+import space.grayt.teremok.exception.EntityNotFoundException;
 import space.grayt.teremok.storage.VoicingRepository;
 
 /** Score calculation and voting rules. */
@@ -24,7 +25,7 @@ public final class VotingService {
         return new RatedVoicing(voicing, likes, votes.size() - likes);
     }
 
-    /** Published voicings of a voice part, best first. */
+    /** Published voicings of a voice part, best first. Drafts and archived voicings are not offered. */
     public List<RatedVoicing> ranked(String textWorkId, String voicePartId) {
         return repository.findByTextWork(textWorkId).stream()
                 .filter(voicing -> voicing.voicePartId().equals(voicePartId))
@@ -34,11 +35,11 @@ public final class VotingService {
                 .toList();
     }
 
-    public Optional<RatedVoicing> rated(String voicingId) {
+    public Optional<RatedVoicing> rated(long voicingId) {
         return repository.find(voicingId).map(this::rate);
     }
 
-    public Optional<VoteKind> voteOf(String voicingId, String voterId) {
+    public Optional<VoteKind> voteOf(long voicingId, String voterId) {
         return repository
                 .votes(voicingId)
                 .stream()
@@ -47,9 +48,10 @@ public final class VotingService {
                 .findFirst();
     }
 
-    public VoteResult vote(String voicingId, String voterId, VoteKind kind) {
+    /** Only published voicings take votes, and never from their author; an archived one counts as a draft. */
+    public VoteResult vote(long voicingId, String voterId, VoteKind kind) {
         Voicing voicing = repository.find(voicingId)
-                .orElseThrow(() -> new IllegalArgumentException("Озвучка не найдена: " + voicingId));
+                .orElseThrow(() -> new EntityNotFoundException("Озвучка не найдена: возможно, её уже удалили."));
         if (voicing.authorId().equals(voterId)) {
             return VoteResult.REJECTED_OWN;
         }
