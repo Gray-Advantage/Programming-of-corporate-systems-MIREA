@@ -1,6 +1,13 @@
 spring:
   application:
     name: text-work-content-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/text_work_content_db}
+    username: ${DATABASE_USERNAME:text_work_content_service}
+    password: ${DATABASE_PASSWORD:text_work_content_service}
+  sql:
+    init:
+      mode: always
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:

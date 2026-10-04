@@ -71,6 +71,47 @@ services:
     networks:
       - backend
 
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: teremok_admin
+      POSTGRES_PASSWORD: teremok_admin
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./docker/postgres/ensure-databases.sh:/database/ensure-databases.sh:ro
+      - ./docker/postgres/reset-databases.sh:/database/reset-databases.sh:ro
+      - ./backend/catalog-service/src/main/resources/schema.sql:/database/catalog-schema.sql:ro
+      - ./backend/text-work-content-service/src/main/resources/schema.sql:/database/text-work-content-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teremok_admin -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - backend
+
+  db-reset:
+    image: postgres:17-alpine
+    profiles: ["tools"]
+    environment:
+      DATABASE_HOST: postgres
+      POSTGRES_USER: teremok_admin
+      POSTGRES_PASSWORD: teremok_admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "/database/reset-databases.sh"]
+    volumes:
+      - ./docker/postgres/ensure-databases.sh:/database/ensure-databases.sh:ro
+      - ./docker/postgres/reset-databases.sh:/database/reset-databases.sh:ro
+      - ./backend/catalog-service/src/main/resources/schema.sql:/database/catalog-schema.sql:ro
+      - ./backend/text-work-content-service/src/main/resources/schema.sql:/database/text-work-content-schema.sql:ro
+    networks:
+      - backend
+
   catalog-service:
     build:
       context: .
@@ -78,9 +119,14 @@ services:
     image: teremok-catalog-service:local
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: jdbc:postgresql://postgres:5432/catalog_db
+      DATABASE_USERNAME: catalog_service
+      DATABASE_PASSWORD: catalog_service
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       kafka:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     labels:
       - traefik.enable=true
@@ -99,9 +145,14 @@ services:
     image: teremok-text-work-content-service:local
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: jdbc:postgresql://postgres:5432/text_work_content_db
+      DATABASE_USERNAME: text_work_content_service
+      DATABASE_PASSWORD: text_work_content_service
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       kafka:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     labels:
       - traefik.enable=true
@@ -132,6 +183,29 @@ services:
     networks:
       - backend
 
+  database-exporter:
+    build:
+      context: .
+      dockerfile: backend/database-exporter/Dockerfile
+    image: teremok-database-exporter:local
+    profiles: ["tools"]
+    environment:
+      CATALOG_DATABASE_URL: jdbc:postgresql://postgres:5432/catalog_db
+      CATALOG_DATABASE_USERNAME: catalog_service
+      CATALOG_DATABASE_PASSWORD: catalog_service
+      CONTENT_DATABASE_URL: jdbc:postgresql://postgres:5432/text_work_content_db
+      CONTENT_DATABASE_USERNAME: text_work_content_service
+      CONTENT_DATABASE_PASSWORD: text_work_content_service
+      EXPORT_PATH: /exports/teremok-database-export.xlsx
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./exports:/exports
+    networks:
+      - backend
+
 networks:
   edge:
     name: teremok-edge
@@ -141,3 +215,4 @@ networks:
 
 volumes:
   kafka-data:
+  postgres-data:

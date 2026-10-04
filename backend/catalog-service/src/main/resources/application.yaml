@@ -1,6 +1,13 @@
 spring:
   application:
     name: catalog-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/catalog_db}
+    username: ${DATABASE_USERNAME:catalog_service}
+    password: ${DATABASE_PASSWORD:catalog_service}
+  sql:
+    init:
+      mode: always
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:

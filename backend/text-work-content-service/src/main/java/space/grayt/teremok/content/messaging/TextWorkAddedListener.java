@@ -21,7 +21,7 @@ public class TextWorkAddedListener {
 
     @KafkaListener(
             topics = TextWorkAddedEvent.TOPIC,
-            groupId = "text-work-content-service-#{T(java.util.UUID).randomUUID()}")
+            groupId = "text-work-content-service")
     public void onTextWorkAdded(TextWorkAddedEvent event) {
         repository.save(TextWorkContent.from(event.textWork()));
         log.info("Text work {} content saved", event.textWork().id());

@@ -15,7 +15,9 @@ dependencies {
     implementation(project(":backend-client-shared"))
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-kafka")
+    implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    runtimeOnly("org.postgresql:postgresql")
 }
 
 tasks.bootJar {
