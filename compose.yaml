@@ -73,6 +73,8 @@ services:
 
   postgres:
     image: postgres:17-alpine
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-15432}:5432"
     environment:
       POSTGRES_DB: postgres
       POSTGRES_USER: teremok_admin
@@ -92,6 +94,7 @@ services:
       start_period: 10s
     networks:
       - backend
+      - database-access
 
   db-reset:
     image: postgres:17-alpine
@@ -212,6 +215,8 @@ networks:
   backend:
     name: teremok-backend
     internal: true
+  database-access:
+    name: teremok-database-access
 
 volumes:
   kafka-data:

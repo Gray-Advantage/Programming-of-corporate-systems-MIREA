@@ -21,9 +21,10 @@ examples/
 compose.yaml
 ```
 
-`CatalogService` и `TextWorkContentService` не публикуют порты на хост. Единственная
-HTTP-точка входа — Traefik на `http://localhost:8080`. Kafka и PostgreSQL также
-доступны только внутри Docker-сети.
+`CatalogService` и `TextWorkContentService` не публикуют HTTP-порты на хост.
+Единственная HTTP-точка входа — Traefik на `http://localhost:8080`. Kafka доступна
+только внутри Docker-сети. PostgreSQL опубликован только на IPv4 loopback-интерфейсе
+хоста как `127.0.0.1:15432`, чтобы к нему можно было подключиться через pgAdmin.
 
 Один контейнер PostgreSQL содержит две независимые базы:
 
@@ -32,6 +33,37 @@ HTTP-точка входа — Traefik на `http://localhost:8080`. Kafka и Po
 
 Каждый сервис создаёт свои таблицы идемпотентным `schema.sql` при запуске. Отдельный
 мигратор не используется.
+
+### Подключение через pgAdmin
+
+Сначала запустить или пересоздать контейнер PostgreSQL:
+
+```shell
+docker compose up -d --force-recreate postgres
+```
+
+В pgAdmin выбрать `Register Server` и указать параметры подключения:
+
+| Параметр | Значение |
+| --- | --- |
+| Host name/address | `127.0.0.1` |
+| Port | `15432` |
+| Maintenance database | `postgres` |
+| Username | `teremok_admin` |
+| Password | `teremok_admin` |
+
+После подключения в разделе `Databases` будут доступны `catalog_db` и
+`text_work_content_db`. При необходимости можно подключаться сразу под сервисными
+пользователями: `catalog_service` / `catalog_service` для `catalog_db` и
+`text_work_content_service` / `text_work_content_service` для
+`text_work_content_db`.
+
+Хостовый порт можно заменить переменной `POSTGRES_HOST_PORT`, например:
+
+```powershell
+$env:POSTGRES_HOST_PORT = "25432"
+docker compose up -d --force-recreate postgres
+```
 
 ## Запуск backend
 
