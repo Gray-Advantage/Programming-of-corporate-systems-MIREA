@@ -19,6 +19,14 @@ public final class DatabaseExporterApplication {
         var outputPath = Path.of(args.length == 1 ? args[0] : env("EXPORT_PATH", DEFAULT_EXPORT_PATH));
         var targets = List.of(
                 new DatabaseTarget(
+                        "auth-service",
+                        "auth",
+                        "auth_db",
+                        env("AUTH_DATABASE_URL", "jdbc:postgresql://postgres:5432/auth_db"),
+                        env("AUTH_DATABASE_USERNAME", "auth_service"),
+                        env("AUTH_DATABASE_PASSWORD", "auth_service"),
+                        List.of("user_account")),
+                new DatabaseTarget(
                         "catalog-service",
                         "catalog",
                         "catalog_db",
@@ -29,6 +37,39 @@ public final class DatabaseExporterApplication {
                                 "catalog_text_work",
                                 "catalog_text_work_author",
                                 "catalog_text_work_translator")),
+                new DatabaseTarget(
+                        "draft-recordings-service",
+                        "draft",
+                        "draft_recordings_db",
+                        env("DRAFT_DATABASE_URL", "jdbc:postgresql://postgres:5432/draft_recordings_db"),
+                        env("DRAFT_DATABASE_USERNAME", "draft_recordings_service"),
+                        env("DRAFT_DATABASE_PASSWORD", "draft_recordings_service"),
+                        List.of(
+                                "draft_user",
+                                "draft_text_work",
+                                "draft_segment",
+                                "draft_role",
+                                "draft_fragment",
+                                "draft_fragment_recording",
+                                "draft_role_publication")),
+                new DatabaseTarget(
+                        "recordings-service",
+                        "recordings",
+                        "recordings_db",
+                        env("RECORDINGS_DATABASE_URL", "jdbc:postgresql://postgres:5432/recordings_db"),
+                        env("RECORDINGS_DATABASE_USERNAME", "recordings_service"),
+                        env("RECORDINGS_DATABASE_PASSWORD", "recordings_service"),
+                        List.of(
+                                "recording_user",
+                                "recording_text_work",
+                                "recording_segment",
+                                "recording_role",
+                                "recording_fragment",
+                                "role_recording",
+                                "fragment_recording",
+                                "render_job",
+                                "render_job_role",
+                                "render_output")),
                 new DatabaseTarget(
                         "text-work-content-service",
                         "content",

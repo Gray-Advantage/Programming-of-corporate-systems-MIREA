@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/auth_db}
+    username: ${DATABASE_USERNAME:auth_service}
+    password: ${DATABASE_PASSWORD:auth_service}
+  sql:
+    init:
+      mode: always
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        "spring.json.add.type.headers": false
+
+auth:
+  jwt:
+    secret: ${JWT_SECRET:local-development-jwt-secret-change-before-production}
+    ttl: PT168H
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: draft-recordings-service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/draft_recordings_db}
+    username: ${DATABASE_USERNAME:draft_recordings_service}
+    password: ${DATABASE_PASSWORD:draft_recordings_service}
+  sql:
+    init:
+      mode: always
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        "spring.json.add.type.headers": false
+    listener:
+      missing-topics-fatal: true
+
+auth:
+  jwt:
+    secret: ${JWT_SECRET:local-development-jwt-secret-change-before-production}
+
+storage:
+  endpoint: ${S3_ENDPOINT:http://minio:9000}
+  access-key: ${S3_ACCESS_KEY:teremok}
+  secret-key: ${S3_SECRET_KEY:teremok-secret}
+  bucket: ${S3_BUCKET:teremok-audio}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

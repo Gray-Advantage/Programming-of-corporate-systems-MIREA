@@ -8,6 +8,14 @@ export PGPASSWORD="$POSTGRES_PASSWORD"
 
 sh /database/ensure-databases.sh >/dev/null
 
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname auth_db <<-SQL
+    DROP SCHEMA public CASCADE;
+    CREATE SCHEMA public AUTHORIZATION auth_service;
+SQL
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname auth_db \
+    --command "SET ROLE auth_service" \
+    --file /database/auth-schema.sql
+
 psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname catalog_db <<-SQL
     DROP SCHEMA public CASCADE;
     CREATE SCHEMA public AUTHORIZATION catalog_service;
@@ -15,6 +23,22 @@ SQL
 psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname catalog_db \
     --command "SET ROLE catalog_service" \
     --file /database/catalog-schema.sql
+
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname draft_recordings_db <<-SQL
+    DROP SCHEMA public CASCADE;
+    CREATE SCHEMA public AUTHORIZATION draft_recordings_service;
+SQL
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname draft_recordings_db \
+    --command "SET ROLE draft_recordings_service" \
+    --file /database/draft-recordings-schema.sql
+
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname recordings_db <<-SQL
+    DROP SCHEMA public CASCADE;
+    CREATE SCHEMA public AUTHORIZATION recordings_service;
+SQL
+psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname recordings_db \
+    --command "SET ROLE recordings_service" \
+    --file /database/recordings-schema.sql
 
 psql --host "$DATABASE_HOST" --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname text_work_content_db <<-SQL
     DROP SCHEMA public CASCADE;

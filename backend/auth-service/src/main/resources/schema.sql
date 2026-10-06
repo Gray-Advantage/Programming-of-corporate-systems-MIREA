@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS user_account (
+    id UUID PRIMARY KEY,
+    login VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(100) NOT NULL,
+    registered_at TIMESTAMP WITH TIME ZONE NOT NULL
+);

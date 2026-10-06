@@ -52,24 +52,37 @@ services:
 
   kafka-topics-init:
     image: apache/kafka:4.1.2
-    profiles: ["tools"]
     depends_on:
       kafka:
         condition: service_healthy
-    command:
-      - /opt/kafka/bin/kafka-topics.sh
-      - --bootstrap-server
-      - kafka:9092
-      - --create
-      - --if-not-exists
-      - --topic
-      - text-work-added
-      - --partitions
-      - "1"
-      - --replication-factor
-      - "1"
+    command: ["sh", "/kafka/create-topics.sh"]
+    volumes:
+      - ./docker/kafka/create-topics.sh:/kafka/create-topics.sh:ro
     networks:
       - backend
+
+  minio:
+    build:
+      context: ./docker/minio
+    image: teremok-minio:local
+    command: server /data --console-address ":9001"
+    ports:
+      - "127.0.0.1:${MINIO_API_HOST_PORT:-19000}:9000"
+      - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-19001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-teremok}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-teremok-secret}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - backend
+      - object-storage-access
 
   postgres:
     image: postgres:17-alpine
@@ -84,7 +97,10 @@ services:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
       - ./docker/postgres/ensure-databases.sh:/database/ensure-databases.sh:ro
       - ./docker/postgres/reset-databases.sh:/database/reset-databases.sh:ro
+      - ./backend/auth-service/src/main/resources/schema.sql:/database/auth-schema.sql:ro
       - ./backend/catalog-service/src/main/resources/schema.sql:/database/catalog-schema.sql:ro
+      - ./backend/draft-recordings-service/src/main/resources/schema.sql:/database/draft-recordings-schema.sql:ro
+      - ./backend/recordings-service/src/main/resources/schema.sql:/database/recordings-schema.sql:ro
       - ./backend/text-work-content-service/src/main/resources/schema.sql:/database/text-work-content-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U teremok_admin -d postgres"]
@@ -95,6 +111,26 @@ services:
     networks:
       - backend
       - database-access
+
+  db-init:
+    image: postgres:17-alpine
+    environment:
+      DATABASE_HOST: postgres
+      POSTGRES_USER: teremok_admin
+      POSTGRES_PASSWORD: teremok_admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "/database/ensure-databases.sh"]
+    volumes:
+      - ./docker/postgres/ensure-databases.sh:/database/ensure-databases.sh:ro
+      - ./backend/auth-service/src/main/resources/schema.sql:/database/auth-schema.sql:ro
+      - ./backend/catalog-service/src/main/resources/schema.sql:/database/catalog-schema.sql:ro
+      - ./backend/draft-recordings-service/src/main/resources/schema.sql:/database/draft-recordings-schema.sql:ro
+      - ./backend/recordings-service/src/main/resources/schema.sql:/database/recordings-schema.sql:ro
+      - ./backend/text-work-content-service/src/main/resources/schema.sql:/database/text-work-content-schema.sql:ro
+    networks:
+      - backend
 
   db-reset:
     image: postgres:17-alpine
@@ -110,8 +146,42 @@ services:
     volumes:
       - ./docker/postgres/ensure-databases.sh:/database/ensure-databases.sh:ro
       - ./docker/postgres/reset-databases.sh:/database/reset-databases.sh:ro
+      - ./backend/auth-service/src/main/resources/schema.sql:/database/auth-schema.sql:ro
       - ./backend/catalog-service/src/main/resources/schema.sql:/database/catalog-schema.sql:ro
+      - ./backend/draft-recordings-service/src/main/resources/schema.sql:/database/draft-recordings-schema.sql:ro
+      - ./backend/recordings-service/src/main/resources/schema.sql:/database/recordings-schema.sql:ro
       - ./backend/text-work-content-service/src/main/resources/schema.sql:/database/text-work-content-schema.sql:ro
+    networks:
+      - backend
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: backend/auth-service/Dockerfile
+    image: teremok-auth-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: jdbc:postgresql://postgres:5432/auth_db
+      DATABASE_USERNAME: auth_service
+      DATABASE_PASSWORD: auth_service
+      JWT_SECRET: local-development-jwt-secret-change-before-production
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      kafka-topics-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)
+      - traefik.http.routers.auth.entrypoints=web
+      - traefik.http.routers.auth.middlewares=local-cors@docker
+      - traefik.http.services.auth.loadbalancer.server.port=8080
     networks:
       - backend
 
@@ -127,6 +197,10 @@ services:
       DATABASE_PASSWORD: catalog_service
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
+      db-init:
+        condition: service_completed_successfully
+      kafka-topics-init:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       postgres:
@@ -138,6 +212,97 @@ services:
       - traefik.http.routers.catalog.entrypoints=web
       - traefik.http.routers.catalog.middlewares=local-cors@docker
       - traefik.http.services.catalog.loadbalancer.server.port=8080
+    networks:
+      - backend
+
+  draft-recordings-service:
+    build:
+      context: .
+      dockerfile: backend/draft-recordings-service/Dockerfile
+    image: teremok-draft-recordings-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: jdbc:postgresql://postgres:5432/draft_recordings_db
+      DATABASE_USERNAME: draft_recordings_service
+      DATABASE_PASSWORD: draft_recordings_service
+      JWT_SECRET: local-development-jwt-secret-change-before-production
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-teremok}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-teremok-secret}
+      S3_BUCKET: teremok-audio
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      kafka-topics-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.draft-recordings.rule=PathPrefix(`/api/v1/draft-recordings`)
+      - traefik.http.routers.draft-recordings.entrypoints=web
+      - traefik.http.routers.draft-recordings.middlewares=local-cors@docker
+      - traefik.http.services.draft-recordings.loadbalancer.server.port=8080
+    networks:
+      - backend
+
+  recordings-service:
+    build:
+      context: .
+      dockerfile: backend/recordings-service/Dockerfile
+    image: teremok-recordings-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DATABASE_URL: jdbc:postgresql://postgres:5432/recordings_db
+      DATABASE_USERNAME: recordings_service
+      DATABASE_PASSWORD: recordings_service
+      JWT_SECRET: local-development-jwt-secret-change-before-production
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      kafka-topics-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.recordings.rule=PathPrefix(`/api/v1/recordings`)
+      - traefik.http.routers.recordings.entrypoints=web
+      - traefik.http.routers.recordings.middlewares=local-cors@docker
+      - traefik.http.services.recordings.loadbalancer.server.port=8080
+    networks:
+      - backend
+
+  renderer-service:
+    build:
+      context: .
+      dockerfile: backend/renderer-service/Dockerfile
+    image: teremok-renderer-service:local
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-teremok}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-teremok-secret}
+      S3_BUCKET: teremok-audio
+      FFMPEG_PATH: ffmpeg
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      kafka-topics-init:
+        condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - backend
 
@@ -153,6 +318,10 @@ services:
       DATABASE_PASSWORD: text_work_content_service
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
+      db-init:
+        condition: service_completed_successfully
+      kafka-topics-init:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
       postgres:
@@ -179,6 +348,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
+      kafka-topics-init:
+        condition: service_completed_successfully
       kafka:
         condition: service_healthy
     volumes:
@@ -193,6 +364,15 @@ services:
     image: teremok-database-exporter:local
     profiles: ["tools"]
     environment:
+      AUTH_DATABASE_URL: jdbc:postgresql://postgres:5432/auth_db
+      AUTH_DATABASE_USERNAME: auth_service
+      AUTH_DATABASE_PASSWORD: auth_service
+      DRAFT_DATABASE_URL: jdbc:postgresql://postgres:5432/draft_recordings_db
+      DRAFT_DATABASE_USERNAME: draft_recordings_service
+      DRAFT_DATABASE_PASSWORD: draft_recordings_service
+      RECORDINGS_DATABASE_URL: jdbc:postgresql://postgres:5432/recordings_db
+      RECORDINGS_DATABASE_USERNAME: recordings_service
+      RECORDINGS_DATABASE_PASSWORD: recordings_service
       CATALOG_DATABASE_URL: jdbc:postgresql://postgres:5432/catalog_db
       CATALOG_DATABASE_USERNAME: catalog_service
       CATALOG_DATABASE_PASSWORD: catalog_service
@@ -202,6 +382,8 @@ services:
       EXPORT_PATH: /exports/teremok-database-export.xlsx
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
+      db-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
     volumes:
@@ -217,7 +399,10 @@ networks:
     internal: true
   database-access:
     name: teremok-database-access
+  object-storage-access:
+    name: teremok-object-storage-access
 
 volumes:
   kafka-data:
+  minio-data:
   postgres-data:
