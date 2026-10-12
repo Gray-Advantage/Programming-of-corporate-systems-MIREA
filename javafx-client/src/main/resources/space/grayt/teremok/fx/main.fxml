@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="space.grayt.teremok.fx.ui.MainController" styleClass="app-root">
+  <top><HBox spacing="18" alignment="CENTER_LEFT" styleClass="header">
+    <VBox spacing="4"><Label text="ТЕРЕМОК" styleClass="eyebrow"/><Label text="Студия озвучки" styleClass="title"/></VBox>
+    <Region HBox.hgrow="ALWAYS"/>
+    <Label fx:id="identity" styleClass="muted"/>
+    <Button text="Выйти" onAction="#logout"/>
+  </HBox></top>
+  <center><TabPane tabClosingPolicy="UNAVAILABLE">
+    <tabs>
+      <Tab text="Произведения"><content><VBox spacing="16" styleClass="page">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+          <TextField fx:id="search" promptText="Поиск по названию" HBox.hgrow="ALWAYS"/>
+          <ComboBox fx:id="language" prefWidth="150"/>
+          <ComboBox fx:id="origin" prefWidth="150"/>
+          <Button fx:id="refreshButton" text="Обновить" onAction="#refresh"/>
+        </HBox>
+        <TableView fx:id="works" VBox.vgrow="ALWAYS">
+          <columns>
+            <TableColumn fx:id="titleColumn" text="Произведение" prefWidth="360"/>
+            <TableColumn fx:id="authorsColumn" text="Автор" prefWidth="290"/>
+            <TableColumn fx:id="languageColumn" text="Язык" prefWidth="120"/>
+            <TableColumn fx:id="kindColumn" text="Тип" prefWidth="120"/>
+          </columns>
+        </TableView>
+        <HBox spacing="12">
+          <Button fx:id="recordButton" text="Записать роль" onAction="#record" styleClass="primary-button"/>
+          <Button fx:id="renderButton" text="Собрать озвучку" onAction="#render"/>
+          <Region HBox.hgrow="ALWAYS"/>
+          <Label text="Сортировка — нажатием на заголовок столбца" styleClass="muted"/>
+        </HBox>
+      </VBox></content></Tab>
+      <Tab text="Статистика"><content><VBox spacing="20" styleClass="page">
+        <HBox spacing="12" alignment="CENTER_LEFT"><Label text="Наша библиотека в цифрах" styleClass="section-title"/><Region HBox.hgrow="ALWAYS"/><Button text="Обновить" onAction="#statistics"/></HBox>
+        <Label text="Показатели отражают обработанные события. Новые данные могут появляться с небольшой задержкой." wrapText="true" styleClass="muted"/>
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"><content><FlowPane fx:id="metrics" hgap="16" vgap="16"/></content></ScrollPane>
+        <Label fx:id="statsUpdated" styleClass="muted"/>
+      </VBox></content></Tab>
+      <Tab text="Экспорт Excel"><content><VBox spacing="20" styleClass="page">
+        <Label text="Выгрузка данных сервисов" styleClass="section-title"/>
+        <Label text="Выберите, какие данные включить в Excel. Каждая таблица будет на отдельном листе. Путь сохранения выбирается после нажатия кнопки." wrapText="true" styleClass="muted"/>
+        <VBox fx:id="services" spacing="18" styleClass="card"/>
+        <Button fx:id="exportButton" text="Сохранить Excel…" onAction="#export" styleClass="primary-button"/>
+        <Label text="При недоступности сервисов файл содержит описание ошибок на листе _export_status." wrapText="true" styleClass="muted"/>
+        <Region VBox.vgrow="ALWAYS"/>
+      </VBox></content></Tab>
+    </tabs>
+  </TabPane></center>
+  <bottom><Label fx:id="status" text="Готово" wrapText="true" styleClass="status-bar" maxWidth="Infinity"/></bottom>
+</BorderPane>

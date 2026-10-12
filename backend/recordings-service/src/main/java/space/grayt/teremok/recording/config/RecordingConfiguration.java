@@ -16,6 +16,15 @@ import space.grayt.teremok.security.UnauthorizedResponseWriter;
 public class RecordingConfiguration {
 
     @Bean
+    space.grayt.teremok.storage.ObjectStorage objectStorage(
+            @Value("${storage.endpoint}") String endpoint,
+            @Value("${storage.access-key}") String accessKey,
+            @Value("${storage.secret-key}") String secretKey,
+            @Value("${storage.bucket}") String bucket) {
+        return new space.grayt.teremok.storage.MinioObjectStorage(endpoint, accessKey, secretKey, bucket);
+    }
+
+    @Bean
     Clock clock() {
         return Clock.systemUTC();
     }

@@ -29,6 +29,11 @@ public final class MinioObjectStorage implements ObjectStorage {
     }
 
     @Override
+    public InputStream open(String objectKey) {
+        return run(() -> client.getObject(GetObjectArgs.builder().bucket(bucket).object(objectKey).build()));
+    }
+
+    @Override
     public void put(String objectKey, InputStream input, long size, String contentType) {
         run(() -> client.putObject(PutObjectArgs.builder()
                 .bucket(bucket)

@@ -196,7 +196,7 @@ public class DraftRecordingService {
         }
     }
 
-    private DraftRecording ownedDraft(UUID userId, UUID recordingId) {
+    public DraftRecording ownedDraft(UUID userId, UUID recordingId) {
         var recording = repository.findDraft(recordingId)
                 .orElseThrow(() -> new DraftNotFoundException("Draft recording not found: " + recordingId));
         if (!recording.userId().equals(userId)) {

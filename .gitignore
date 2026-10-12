@@ -1,4 +1,7 @@
 build/
+**/target/
+.tools/
+docker/.maven-seed/
 .gradle/
 .gradle-local/
 **/build/

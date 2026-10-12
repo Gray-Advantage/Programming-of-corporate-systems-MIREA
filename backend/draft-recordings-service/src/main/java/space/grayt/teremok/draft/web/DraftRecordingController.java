@@ -25,9 +25,23 @@ import space.grayt.teremok.draft.service.DraftRecordingService;
 public class DraftRecordingController {
 
     private final DraftRecordingService service;
+    private final space.grayt.teremok.storage.ObjectStorage storage;
 
-    public DraftRecordingController(DraftRecordingService service) {
+    public DraftRecordingController(DraftRecordingService service, space.grayt.teremok.storage.ObjectStorage storage) {
         this.service = service;
+        this.storage = storage;
+    }
+
+    @GetMapping("/{recordingId}/audio")
+    public ResponseEntity<org.springframework.core.io.InputStreamResource> download(
+            Authentication authentication, @PathVariable UUID recordingId) {
+        var draft = service.ownedDraft(userId(authentication), recordingId);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", org.springframework.http.ContentDisposition.attachment()
+                        .filename(draft.originalFileName(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
+                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(draft.sizeBytes())
+                .body(new org.springframework.core.io.InputStreamResource(storage.open(draft.objectKey())));
     }
 
     @PostMapping("/fragments/{fragmentId}")

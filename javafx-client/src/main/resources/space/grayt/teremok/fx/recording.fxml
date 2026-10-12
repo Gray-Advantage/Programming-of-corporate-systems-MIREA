@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="space.grayt.teremok.fx.ui.RecordingController" styleClass="app-root">
+  <top><VBox spacing="6" styleClass="header"><Label text="ЗАПИСЬ РОЛИ" styleClass="eyebrow"/><Label fx:id="workTitle" styleClass="title" wrapText="true"/></VBox></top>
+  <center><VBox fx:id="body" spacing="12" styleClass="page">
+    <HBox spacing="12" alignment="CENTER_LEFT"><Label text="Роль"/><ComboBox fx:id="role" prefWidth="270"/><Region HBox.hgrow="ALWAYS"/><Label fx:id="progress"/></HBox>
+    <TableView fx:id="fragments" prefHeight="180" VBox.vgrow="ALWAYS">
+      <columns>
+        <TableColumn fx:id="segmentColumn" text="Сегмент" prefWidth="190"/>
+        <TableColumn fx:id="fragmentColumn" text="№" prefWidth="55"/>
+        <TableColumn fx:id="textColumn" text="Фрагмент текста" prefWidth="600"/>
+        <TableColumn fx:id="selectedColumn" text="Вариант" prefWidth="90"/>
+      </columns>
+    </TableView>
+    <TextArea fx:id="fragmentText" editable="false" wrapText="true" prefRowCount="3"/>
+    <HBox spacing="10" alignment="CENTER_LEFT">
+      <Button fx:id="startButton" text="● Записать с микрофона" onAction="#startRecording" styleClass="primary-button"/>
+      <Button fx:id="stopButton" text="Остановить и загрузить" onAction="#stopRecording"/>
+      <Button fx:id="retryButton" text="Повторить загрузку" onAction="#retry"/>
+    </HBox>
+    <VBox fx:id="tools" spacing="12" VBox.vgrow="ALWAYS">
+      <HBox spacing="10"><Button text="Загрузить аудиофайл…" onAction="#upload"/><Button text="Обновить варианты" onAction="#refresh"/><Region HBox.hgrow="ALWAYS"/><Label text="Можно записать несколько вариантов" styleClass="muted"/></HBox>
+      <TableView fx:id="drafts" prefHeight="150" VBox.vgrow="ALWAYS">
+        <columns><TableColumn fx:id="fileColumn" text="Вариант записи" prefWidth="520"/><TableColumn fx:id="sizeColumn" text="Размер" prefWidth="140"/><TableColumn fx:id="dateColumn" text="Записано" prefWidth="250"/></columns>
+      </TableView>
+      <HBox spacing="10"><Button text="Выбрать этот вариант" onAction="#choose" styleClass="primary-button"/><Button text="Слушать" onAction="#preview"/><Button text="Остановить звук" onAction="#stopPlayback"/><Button text="Удалить вариант" onAction="#delete" styleClass="danger-button"/></HBox>
+      <HBox spacing="12" alignment="CENTER_LEFT"><Button text="Опубликовать роль целиком" onAction="#publish"/><Label text="Нужен один выбранный вариант для каждого фрагмента роли" wrapText="true" styleClass="muted"/></HBox>
+    </VBox>
+  </VBox></center>
+  <bottom><Label fx:id="status" wrapText="true" text="Выберите роль и фрагмент" maxWidth="Infinity" styleClass="status-bar"/></bottom>
+</BorderPane>

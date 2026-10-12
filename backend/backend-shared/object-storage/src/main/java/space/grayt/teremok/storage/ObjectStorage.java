@@ -5,6 +5,10 @@ import java.nio.file.Path;
 
 public interface ObjectStorage {
 
+    default InputStream open(String objectKey) {
+        throw new UnsupportedOperationException("Streaming is not supported by this storage");
+    }
+
     void put(String objectKey, InputStream input, long size, String contentType);
 
     void copy(String sourceKey, String targetKey);

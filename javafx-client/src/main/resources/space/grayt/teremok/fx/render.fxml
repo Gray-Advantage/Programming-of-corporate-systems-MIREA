@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="space.grayt.teremok.fx.ui.RenderController" styleClass="app-root">
+  <top><VBox spacing="6" styleClass="header"><Label text="СБОРКА ОЗВУЧКИ" styleClass="eyebrow"/><Label fx:id="workTitle" styleClass="title" wrapText="true"/></VBox></top>
+  <center><VBox spacing="16" styleClass="page">
+    <HBox spacing="12" alignment="CENTER_LEFT"><Label text="Выберите озвучку каждой роли" styleClass="section-title"/><Region HBox.hgrow="ALWAYS"/><Button fx:id="refreshButton" text="Обновить роли" onAction="#refresh"/></HBox>
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"><content><VBox fx:id="roles" spacing="12"/></content></ScrollPane>
+    <HBox spacing="12" alignment="CENTER_LEFT"><Label text="Результат"/><ComboBox fx:id="mode" prefWidth="340"/><Button fx:id="renderButton" text="Собрать аудио" onAction="#render" styleClass="primary-button"/><Button text="Проверить сборку" onAction="#resume"/></HBox>
+    <Separator/>
+    <Label text="Готовые файлы" styleClass="section-title"/>
+    <ScrollPane fitToWidth="true" prefHeight="150"><content><VBox fx:id="outputs" spacing="10"/></content></ScrollPane>
+    <Button text="Остановить звук" onAction="#stopPlayback"/>
+  </VBox></center>
+  <bottom><Label fx:id="status" wrapText="true" maxWidth="Infinity" styleClass="status-bar"/></bottom>
+</BorderPane>

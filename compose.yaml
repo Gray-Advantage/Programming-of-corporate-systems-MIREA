@@ -263,6 +263,10 @@ services:
       DATABASE_USERNAME: recordings_service
       DATABASE_PASSWORD: recordings_service
       JWT_SECRET: local-development-jwt-secret-change-before-production
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-teremok}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-teremok-secret}
+      S3_BUCKET: teremok-audio
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       db-init:
@@ -272,6 +276,8 @@ services:
       kafka:
         condition: service_healthy
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     labels:
       - traefik.enable=true
@@ -388,6 +394,35 @@ services:
         condition: service_healthy
     volumes:
       - ./exports:/exports
+    networks:
+      - backend
+
+  export-api:
+    build:
+      context: .
+      dockerfile: backend/database-exporter/Dockerfile
+    image: teremok-database-exporter:local
+    command: ["--server"]
+    environment:
+      AUTH_DATABASE_URL: jdbc:postgresql://postgres:5432/auth_db
+      CATALOG_DATABASE_URL: jdbc:postgresql://postgres:5432/catalog_db
+      CONTENT_DATABASE_URL: jdbc:postgresql://postgres:5432/text_work_content_db
+      DRAFT_DATABASE_URL: jdbc:postgresql://postgres:5432/draft_recordings_db
+      RECORDINGS_DATABASE_URL: jdbc:postgresql://postgres:5432/recordings_db
+      JWT_SECRET: local-development-jwt-secret-change-before-production
+      JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=teremok-backend
+      - traefik.http.routers.export.rule=PathPrefix(`/api/v1/export`)
+      - traefik.http.routers.export.entrypoints=web
+      - traefik.http.routers.export.middlewares=local-cors@docker
+      - traefik.http.services.export.loadbalancer.server.port=8080
     networks:
       - backend
 

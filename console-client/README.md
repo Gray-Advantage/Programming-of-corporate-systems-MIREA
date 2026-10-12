@@ -6,11 +6,13 @@
 Запуск из корня репозитория:
 
 ```powershell
-.\gradlew.bat :console-client:run
+.\mvnw.cmd -pl console-client -am package -DskipTests
+java -jar console-client/target/console-client-jar-with-dependencies.jar
 ```
 
 ```shell
-./gradlew :console-client:run
+./mvnw -pl console-client -am package -DskipTests
+java -jar console-client/target/console-client-jar-with-dependencies.jar
 ```
 
 Для обращения к backend должен быть запущен Docker-стенд. Клиент ходит к Traefik по

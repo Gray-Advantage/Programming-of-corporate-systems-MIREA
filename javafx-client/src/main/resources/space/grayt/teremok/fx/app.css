@@ -1,0 +1,40 @@
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 14px;
+    -fx-base: #f6f4ee;
+    -fx-background: #f6f4ee;
+    -fx-accent: #28685c;
+    -fx-focus-color: #28685c;
+    -fx-faint-focus-color: #28685c22;
+    -fx-text-fill: #223b36;
+}
+.app-root, .login-root { -fx-background-color: #f6f4ee; }
+.login-card { -fx-padding: 28; -fx-background-color: white; -fx-background-radius: 18; -fx-border-radius: 18; -fx-border-color: #e0e6df; }
+.header { -fx-padding: 20 26; -fx-background-color: #e7eee6; -fx-border-color: transparent transparent #cddbd0 transparent; }
+.page { -fx-padding: 22; }
+.title { -fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: #203e35; }
+.eyebrow { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #28685c; }
+.section-title { -fx-font-size: 19px; -fx-font-weight: bold; }
+.muted { -fx-text-fill: #6b776e; -fx-font-size: 12px; }
+.warning { -fx-text-fill: #a13a2b; }
+.button { -fx-padding: 10 16; -fx-background-radius: 8; -fx-border-radius: 8; -fx-background-color: #e4ebe4; -fx-text-fill: #24483e; -fx-cursor: hand; }
+.button:hover { -fx-background-color: #d4e2d7; }
+.primary-button { -fx-background-color: #28685c; -fx-text-fill: white; -fx-font-weight: bold; }
+.primary-button:hover { -fx-background-color: #1e5148; }
+.danger-button { -fx-background-color: #f4e3df; -fx-text-fill: #a13a2b; }
+.text-field, .text-area, .combo-box { -fx-background-radius: 7; -fx-border-radius: 7; -fx-border-color: #cddbd0; -fx-background-color: white; }
+.text-field, .combo-box { -fx-padding: 7; }
+.table-view { -fx-background-color: white; -fx-border-color: #dce3da; -fx-background-radius: 8; }
+.table-view .column-header, .table-view .column-header-background .filler { -fx-background-color: #e8eee6; -fx-padding: 8 4; }
+.table-row-cell { -fx-cell-size: 39; -fx-border-color: transparent transparent #eff2ec transparent; }
+.table-row-cell:odd { -fx-background-color: #fafbf8; }
+.table-row-cell:selected { -fx-background-color: #d6e7df; }
+.table-row-cell:selected .text { -fx-fill: #173f34; }
+.card { -fx-padding: 18; -fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10; -fx-border-color: #e0e6df; }
+.metric-value { -fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #28685c; }
+.status-bar { -fx-padding: 12 22; -fx-background-color: #e8eee6; -fx-font-size: 12px; }
+.tab-pane .tab-header-area .tab-header-background { -fx-background-color: #eef1e9; }
+.tab { -fx-padding: 9 18; -fx-background-radius: 7 7 0 0; }
+.tab:selected { -fx-background-color: #f6f4ee; }
+.scroll-pane { -fx-background-color: transparent; -fx-border-color: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }

@@ -1,7 +1,7 @@
 # Теремок
 
 Учебный backend приложения для озвучивания текстов по ролям. Репозиторий является
-одним Gradle multi-project на Java 21.
+одним Maven multi-module проектом на Java 21. Основной настольный клиент — JavaFX.
 
 ## Структура
 
@@ -22,6 +22,7 @@ backend/
 backend-client-shared/
   src/main/java/                    общие REST-контракты backend и клиентов
 console-client/                    нативное консольное приложение
+javafx-client/                     JavaFX-клиент: REST, FXML, CSS, запись и сборка аудио
 examples/
   text-work-added-*.json             примеры событий для трёх сказок
 compose.yaml
@@ -282,19 +283,61 @@ docker compose run --build --rm database-exporter
 
 ## Console client
 
+Консольный клиент сохранён для истории, но больше не развивается.
+Основной интерфейс — JavaFX.
+
+## JavaFX client
+
+Клиент запускается на компьютере, подключается только к REST через Traefik и
+не имеет JDBC-доступа к базам. Java 21 обязательна; Maven скачивается wrapper.
+
+```powershell
+docker compose up --build -d
+.\mvnw.cmd install -DskipTests
+.\mvnw.cmd -pl javafx-client javafx:run
+```
+
+Также можно запустить `powershell -File javafx-client/run.ps1`.
+В приложении есть регистрация/вход, каталог с поиском по названию, два простых
+фильтра и сортировка, запись/загрузка нескольких вариантов на фрагмент,
+публикация роли, сборка MP3 целиком/по сегментам, прослушивание и сохранение.
+Статистика и Excel находятся в отдельных вкладках. В Excel выбираются сервисы,
+а не строки текущей таблицы. Подробности: [javafx-client/README.md](javafx-client/README.md).
+
+Дополнительные JWT-защищённые API для клиента:
+
+```text
+GET /api/v1/draft-recordings/{recordingId}/audio
+GET /api/v1/recordings/renders/{renderId}/outputs/{index}
+GET /api/v1/export/statistics
+GET /api/v1/export/xlsx?services=auth-service&services=catalog-service
+```
+
+`index` начинается с нуля. Произвольные ключи MinIO клиенту для скачивания
+передать нельзя: backend проверяет владельца черновика/задания и выбирает объект.
+`export-api` использует существующий exporter в серверном режиме, сохраняет
+старый консольный сценарий выгрузки и доступен через Traefik. Статистика считает
+обработанные сущности в БД, а не Kafka offsets: повторы событий не раздувают числа.
+В локальном учебном стенде любой вошедший пользователь может выгрузить все
+колонки выбранных БД, включая хэши паролей. Это сознательно не production-права.
+
+### Старый консольный клиент
+
 Console client запускается на хосте и обращается только к Traefik. По умолчанию адрес
 backend — `http://localhost:8080`; его можно заменить переменной `BACKEND_URL`.
 
 Windows:
 
 ```powershell
-.\gradlew.bat :console-client:run
+.\mvnw.cmd -pl console-client -am package -DskipTests
+java -jar console-client/target/console-client-jar-with-dependencies.jar
 ```
 
 macOS/Linux:
 
 ```shell
-./gradlew :console-client:run
+./mvnw -pl console-client -am package -DskipTests
+java -jar console-client/target/console-client-jar-with-dependencies.jar
 ```
 
 При запуске клиент получает список произведений из `CatalogService`, для каждого из
@@ -307,13 +350,13 @@ macOS/Linux:
 ## Сборка Java-проектов
 
 ```shell
-./gradlew assemble
+./mvnw install -DskipTests
 ```
 
 Spring-сервисы используют Spring Boot 4.1.1. Тесты сервисов запускаются командой:
 
 ```shell
-./gradlew :backend:auth-service:test
-./gradlew :backend:draft-recordings-service:test
-./gradlew :backend:recordings-service:test
+./mvnw -pl backend/auth-service -am test
+./mvnw -pl backend/draft-recordings-service -am test
+./mvnw -pl backend/recordings-service -am test
 ```

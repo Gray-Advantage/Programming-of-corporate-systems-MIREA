@@ -19,9 +19,25 @@ import space.grayt.teremok.recording.service.RecordingService;
 public class RecordingController {
 
     private final RecordingService service;
+    private final space.grayt.teremok.storage.ObjectStorage storage;
 
-    public RecordingController(RecordingService service) {
+    public RecordingController(RecordingService service, space.grayt.teremok.storage.ObjectStorage storage) {
         this.service = service;
+        this.storage = storage;
+    }
+
+    @GetMapping("/renders/{renderId}/outputs/{index}")
+    public ResponseEntity<org.springframework.core.io.InputStreamResource> downloadOutput(
+            Authentication authentication, @PathVariable UUID renderId, @PathVariable int index) {
+        var job = service.findRender(userId(authentication), renderId);
+        if (!"COMPLETED".equals(job.status()) || index < 0 || index >= job.outputs().size()) {
+            throw new space.grayt.teremok.recording.service.RecordingNotFoundException("Render output is not ready");
+        }
+        var output = job.outputs().get(index);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"recording-" + (index + 1) + ".mp3\"")
+                .contentType(org.springframework.http.MediaType.parseMediaType(output.contentType()))
+                .body(new org.springframework.core.io.InputStreamResource(storage.open(output.objectKey())));
     }
 
     @GetMapping("/text-works/{textWorkId}/roles")

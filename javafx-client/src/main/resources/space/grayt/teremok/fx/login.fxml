@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<StackPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="space.grayt.teremok.fx.ui.LoginController" styleClass="login-root">
+  <VBox fx:id="form" spacing="16" maxWidth="430" maxHeight="440" styleClass="login-card">
+    <Label text="ТЕРЕМОК" styleClass="eyebrow"/>
+    <Label text="Озвучиваем вместе" styleClass="title"/>
+    <Label text="Записывайте роли, выбирайте лучшие варианты и собирайте историю." wrapText="true" styleClass="muted"/>
+    <TextField fx:id="address" promptText="Адрес backend"/>
+    <TextField fx:id="login" promptText="Логин" onAction="#signIn"/>
+    <PasswordField fx:id="password" promptText="Пароль" onAction="#signIn"/>
+    <HBox spacing="12">
+      <Button text="Войти" onAction="#signIn" defaultButton="true" styleClass="primary-button" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+      <Button text="Зарегистрироваться" onAction="#register" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+    </HBox>
+    <Label fx:id="status" wrapText="true" minHeight="38" styleClass="warning"/>
+  </VBox>
+</StackPane>
