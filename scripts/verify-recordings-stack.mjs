@@ -65,7 +65,7 @@ try {
     '--topic', 'text-work-added'], { input: JSON.stringify(event) + '\n', timeout: 30_000 });
 
   const register = suffix => api('POST', '/api/v1/auth/register', {
-    login: `smoke-${runId}-${suffix}`, password: 'smoke-password',
+    login: `smoke-${runId}-${suffix}`, password: 'Smoke-test-password123',
   }, null, 201);
   const author = await register('author');
   const reader = await register('reader');

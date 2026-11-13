@@ -14,6 +14,7 @@
   <modules>
     <module>backend-client-shared</module>
     <module>backend/backend-shared/kafka-events</module>
+    <module>backend/backend-shared/http-api</module>
     <module>backend/backend-shared/jwt-auth</module>
     <module>backend/backend-shared/object-storage</module>
     <module>backend/auth-service</module>

@@ -1,0 +1,1 @@
+CREATE TABLE library_deleted(id UUID PRIMARY KEY,deleted_at TIMESTAMPTZ NOT NULL DEFAULT now());

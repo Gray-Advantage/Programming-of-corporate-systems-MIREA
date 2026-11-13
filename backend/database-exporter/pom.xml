@@ -9,6 +9,10 @@
   </parent>
   <artifactId>database-exporter</artifactId>
   <dependencies>
+    <dependency><groupId>space.grayt.teremok</groupId><artifactId>http-api</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>test</scope></dependency>
+    <dependency><groupId>org.springdoc</groupId><artifactId>springdoc-openapi-starter-webmvc-ui</artifactId><version>3.0.3</version></dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi-ooxml</artifactId>

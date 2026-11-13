@@ -196,6 +196,12 @@ public class DraftRecordingService {
         }
     }
 
+    public AudioDownload download(UUID userId, UUID recordingId) {
+        var draft=ownedDraft(userId, recordingId);
+        return new AudioDownload(draft.originalFileName(), draft.sizeBytes(), storage.open(draft.objectKey()));
+    }
+    public record AudioDownload(String fileName, long sizeBytes, InputStream stream) {}
+
     public DraftRecording ownedDraft(UUID userId, UUID recordingId) {
         var recording = repository.findDraft(recordingId)
                 .orElseThrow(() -> new DraftNotFoundException("Draft recording not found: " + recordingId));

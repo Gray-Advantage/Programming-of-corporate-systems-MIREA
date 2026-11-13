@@ -1,42 +1,52 @@
 package space.grayt.teremok.auth.web;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import space.grayt.teremok.auth.service.AuthService;
-import space.grayt.teremok.client.contract.AuthCredentialsRequest;
-import space.grayt.teremok.client.contract.AuthTokenResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.*;
+import org.springframework.web.bind.annotation.*;
+import space.grayt.teremok.auth.service.IdentityService;
+import space.grayt.teremok.client.contract.*;
+import space.grayt.teremok.http.ApiErrors;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthService authService;
+  private final IdentityService identity;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
+  public AuthController(IdentityService identity) {
+    this.identity = identity;
+  }
 
-    @PostMapping("/register")
-    public ResponseEntity<AuthTokenResponse> register(@RequestBody AuthCredentialsRequest request) {
-        var response = toResponse(authService.register(request.login(), request.password()));
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping("/register")
+  public ResponseEntity<AuthTokenResponse> register(
+    @RequestBody AuthCredentialsRequest body,
+    HttpServletRequest request
+  ) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(
+      identity.registerLegacy(
+        body.login(),
+        body.password(),
+        request.getRemoteAddr(),
+        ApiErrors.correlation(request)
+      )
+    );
+  }
 
-    @PostMapping("/login")
-    public AuthTokenResponse login(@RequestBody AuthCredentialsRequest request) {
-        return toResponse(authService.login(request.login(), request.password()));
-    }
+  @PostMapping("/login")
+  public AuthTokenResponse login(
+    @RequestBody AuthCredentialsRequest body,
+    HttpServletRequest request
+  ) {
+    return identity.loginLegacy(
+      body.login(),
+      body.password(),
+      request.getRemoteAddr(),
+      ApiErrors.correlation(request)
+    );
+  }
 
-    @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
-        return ResponseEntity.noContent().build();
-    }
-
-    private static AuthTokenResponse toResponse(AuthService.AuthResult result) {
-        return new AuthTokenResponse(result.userId(), result.accessToken(), "Bearer", result.expiresAt());
-    }
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout() {
+    return ResponseEntity.noContent().build();
+  }
 }

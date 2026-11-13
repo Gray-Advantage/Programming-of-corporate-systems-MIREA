@@ -18,46 +18,76 @@ import space.grayt.teremok.recording.service.RecordingService;
 @RequestMapping("/api/v1/recordings")
 public class RecordingController {
 
-    private final RecordingService service;
-    private final space.grayt.teremok.storage.ObjectStorage storage;
+  private final RecordingService service;
+  private final space.grayt.teremok.recording.service.RecordingFilesService files;
 
-    public RecordingController(RecordingService service, space.grayt.teremok.storage.ObjectStorage storage) {
-        this.service = service;
-        this.storage = storage;
-    }
+  public RecordingController(
+    RecordingService service,
+    space.grayt.teremok.recording.service.RecordingFilesService files
+  ) {
+    this.service = service;
+    this.files = files;
+  }
 
-    @GetMapping("/renders/{renderId}/outputs/{index}")
-    public ResponseEntity<org.springframework.core.io.InputStreamResource> downloadOutput(
-            Authentication authentication, @PathVariable UUID renderId, @PathVariable int index) {
-        var job = service.findRender(userId(authentication), renderId);
-        if (!"COMPLETED".equals(job.status()) || index < 0 || index >= job.outputs().size()) {
-            throw new space.grayt.teremok.recording.service.RecordingNotFoundException("Render output is not ready");
-        }
-        var output = job.outputs().get(index);
-        return ResponseEntity.ok()
-                .header("Content-Disposition", "attachment; filename=\"recording-" + (index + 1) + ".mp3\"")
-                .contentType(org.springframework.http.MediaType.parseMediaType(output.contentType()))
-                .body(new org.springframework.core.io.InputStreamResource(storage.open(output.objectKey())));
-    }
+  @GetMapping("/renders/{renderId}/outputs/{index}")
+  public ResponseEntity<org.springframework.core.io.InputStreamResource> downloadOutput(
+    Authentication authentication,
+    @PathVariable UUID renderId,
+    @PathVariable int index
+  ) {
+    var output = files.download(userId(authentication), renderId, index);
+    return ResponseEntity.ok()
+      .header(
+        "Content-Disposition",
+        "attachment; filename=\"recording-" + (index + 1) + ".mp3\""
+      )
+      .contentType(
+        org.springframework.http.MediaType.parseMediaType(output.contentType())
+      )
+      .body(
+        new org.springframework.core.io.InputStreamResource(output.stream())
+      );
+  }
 
-    @GetMapping("/text-works/{textWorkId}/roles")
-    public PublishedRolesResponse findPublishedRoles(@PathVariable UUID textWorkId) {
-        return service.findPublishedRoles(textWorkId);
-    }
+  @GetMapping("/text-works/{textWorkId}/roles")
+  public PublishedRolesResponse findPublishedRoles(
+    @PathVariable UUID textWorkId
+  ) {
+    return service.findPublishedRoles(textWorkId);
+  }
 
-    @PostMapping("/renders")
-    public ResponseEntity<RenderJobResponse> createRender(
-            Authentication authentication,
-            @RequestBody CreateRenderRequest request) {
-        return ResponseEntity.accepted().body(service.createRender(userId(authentication), request));
-    }
+  @PostMapping("/renders")
+  public ResponseEntity<RenderJobResponse> createRender(
+    Authentication authentication,
+    @RequestBody CreateRenderRequest request
+  ) {
+    return ResponseEntity.accepted().body(
+      service.createRender(userId(authentication), request)
+    );
+  }
 
-    @GetMapping("/renders/{renderId}")
-    public RenderJobResponse findRender(Authentication authentication, @PathVariable UUID renderId) {
-        return service.findRender(userId(authentication), renderId);
-    }
+  @GetMapping("/renders/{renderId}")
+  public RenderJobResponse findRender(
+    Authentication authentication,
+    @PathVariable UUID renderId
+  ) {
+    return service.findRender(userId(authentication), renderId);
+  }
 
-    private static UUID userId(Authentication authentication) {
-        return (UUID) authentication.getPrincipal();
-    }
+  @GetMapping("/renders")
+  public Object history(
+    Authentication authentication,
+    @org.springframework.web.bind.annotation.RequestParam(
+      defaultValue = "0"
+    ) int page,
+    @org.springframework.web.bind.annotation.RequestParam(
+      defaultValue = "12"
+    ) int size
+  ) {
+    return service.history(userId(authentication), page, size);
+  }
+
+  private static UUID userId(Authentication authentication) {
+    return (UUID) authentication.getPrincipal();
+  }
 }

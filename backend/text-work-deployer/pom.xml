@@ -9,6 +9,7 @@
   </parent>
   <artifactId>text-work-deployer</artifactId>
   <dependencies>
+    <dependency><groupId>org.junit.jupiter</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
     <dependency>
       <groupId>space.grayt.teremok</groupId>
       <artifactId>kafka-events</artifactId>

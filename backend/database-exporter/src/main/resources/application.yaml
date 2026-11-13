@@ -1,0 +1,5 @@
+springdoc:
+  api-docs:
+    path: /api/v1/export/openapi
+  swagger-ui:
+    enabled: false

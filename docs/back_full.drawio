@@ -1,3 +1,4 @@
+<?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net">
   <diagram name="Page-1" id="zNxF3BNBhkX1FiRbBENz">
     <mxGraphModel dx="4878" dy="4524" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
@@ -80,15 +81,6 @@
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-20" parent="1" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=light-dark(#FFFFFF,#190033);" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;render-responses&lt;/font&gt;" vertex="1">
           <mxGeometry height="50" width="200" x="1440" y="690" as="geometry" />
         </mxCell>
-        <mxCell id="recordings-topic-published" parent="1" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=light-dark(#FFFFFF,#190033);" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;role-recording-published&lt;/font&gt;" vertex="1">
-          <mxGeometry height="50" width="280" x="955" y="540" as="geometry" />
-        </mxCell>
-        <mxCell id="recordings-edge-draft-published" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-10" target="recordings-topic-published" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" value="publish role">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="recordings-edge-published-recordings" edge="1" parent="1" source="recordings-topic-published" target="sTZsLdJ7ANWSkNWKCmPA-11" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" value="consume">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-21" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-11" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="sTZsLdJ7ANWSkNWKCmPA-19" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <mxPoint x="1130" y="530" as="sourcePoint" />
@@ -165,7 +157,7 @@
             <mxRectangle height="30" width="80" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-31" parent="sTZsLdJ7ANWSkNWKCmPA-29" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;white-space: pre;&quot;&gt;n&lt;/span&gt;ame&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-31" parent="sTZsLdJ7ANWSkNWKCmPA-29" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;white-space: pre;&quot;&gt;n&lt;/span&gt;ame&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;" vertex="1">
           <mxGeometry height="30" width="150" x="80" as="geometry">
             <mxRectangle height="30" width="150" as="alternateBounds" />
           </mxGeometry>
@@ -212,7 +204,7 @@
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-63" parent="1" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;" value="" vertex="1">
           <mxGeometry height="30" width="230" x="-432.5" y="910" as="geometry" />
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-66" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="&lt;div align=&quot;left&quot;&gt;| {type: original}&amp;nbsp;&lt;br&gt;| {&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;type: translation,&amp;nbsp;&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;translared_from: varchar(3),&amp;nbsp;&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;translators: varchar(256)[]&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;}&lt;/div&gt;" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-66" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="&lt;div align=&quot;left&quot;&gt;| {type: original}&amp;nbsp;&lt;br&gt;| {&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;type: translation,&amp;nbsp;&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;translared_from: varchar(3),&amp;nbsp;&lt;br&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;translators: varchar(256)[]&lt;/div&gt;&lt;div align=&quot;left&quot;&gt;}&lt;/div&gt;" vertex="1">
           <mxGeometry height="30" width="210" x="-682.5" y="870" as="geometry" />
         </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-67" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="sTZsLdJ7ANWSkNWKCmPA-60" value="">
@@ -314,7 +306,7 @@
             <mxPoint x="180" y="790" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-113" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#0050ef;fontColor=#ffffff;strokeColor=light-dark(#001DBC, #001484);strokeWidth=4;" value="Draft DB&lt;br&gt;draft_recordings_db" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-113" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#0050ef;fontColor=#ffffff;strokeColor=light-dark(#001DBC, #001484);strokeWidth=4;" value="" vertex="1">
           <mxGeometry height="120" width="112.5" x="1140" y="1200" as="geometry" />
         </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-114" edge="1" parent="1" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;" target="sTZsLdJ7ANWSkNWKCmPA-113" value="">
@@ -328,7 +320,7 @@
             <mxPoint x="512.5" y="800" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-115" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#0050ef;fontColor=#ffffff;strokeColor=light-dark(#001DBC, #001484);strokeWidth=4;" value="Recordings DB&lt;br&gt;recordings_db" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-115" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#0050ef;fontColor=#ffffff;strokeColor=light-dark(#001DBC, #001484);strokeWidth=4;" value="" vertex="1">
           <mxGeometry height="120" width="112.5" x="1860" y="510" as="geometry" />
         </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-116" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-11" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="sTZsLdJ7ANWSkNWKCmPA-115" value="">
@@ -337,7 +329,7 @@
             <mxPoint x="1486.25" y="570" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-117" parent="1" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#fa6800;fontColor=#000000;strokeColor=light-dark(#C73500,#FFD966);strokeWidth=4;perimeterSpacing=22;" value="&lt;font style=&quot;font-size: 32px;&quot;&gt;MinIO / S3&lt;/font&gt;&lt;br&gt;draft/ · published/ · renders/" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-117" parent="1" style="shape=datastore;whiteSpace=wrap;html=1;fillColor=#fa6800;fontColor=#000000;strokeColor=light-dark(#C73500,#FFD966);strokeWidth=4;perimeterSpacing=22;" value="&lt;font style=&quot;font-size: 50px;&quot;&gt;S3&lt;/font&gt;" vertex="1">
           <mxGeometry height="150" width="180" x="930" y="765" as="geometry" />
         </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-120" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-117" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="sTZsLdJ7ANWSkNWKCmPA-10" value="">
@@ -358,7 +350,7 @@
             <mxPoint x="1300" y="570" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-123" parent="1" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#cdeb8b;strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 19px;&quot;&gt;FFmpeg&lt;/font&gt;&lt;br&gt;normalize WAV → concat → MP3" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-123" parent="1" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#cdeb8b;strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 19px;&quot;&gt;ffmpeg.exe&lt;/font&gt;" vertex="1">
           <mxGeometry height="50" width="240" x="1300" y="910" as="geometry" />
         </mxCell>
         <mxCell id="sTZsLdJ7ANWSkNWKCmPA-124" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-123" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="sTZsLdJ7ANWSkNWKCmPA-12" value="">
@@ -581,7 +573,7 @@
             <mxRectangle height="30" width="80" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-179" parent="sTZsLdJ7ANWSkNWKCmPA-177" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;white-space: pre;&quot;&gt;n&lt;/span&gt;ame&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;" vertex="1">
+        <mxCell id="sTZsLdJ7ANWSkNWKCmPA-179" parent="sTZsLdJ7ANWSkNWKCmPA-177" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;white-space: pre;&quot;&gt;n&lt;/span&gt;ame&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#09;&lt;/span&gt;" vertex="1">
           <mxGeometry height="30" width="150" x="80" as="geometry">
             <mxRectangle height="30" width="150" as="alternateBounds" />
           </mxGeometry>
@@ -1451,6 +1443,259 @@
             <mxPoint x="1112" y="100" as="sourcePoint" />
             <mxPoint x="1106" y="-10" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-browser" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Браузер&lt;/font&gt;" vertex="1">
+          <mxGeometry x="-650" y="-980" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-sveltekit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;SvelteKit · Svelte 5&lt;br&gt;UI + BFF&lt;/font&gt;" vertex="1">
+          <mxGeometry x="-350" y="-980" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-javafx" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;JavaFX-клиент&lt;/font&gt;" vertex="1">
+          <mxGeometry x="50" y="-980" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-console-client" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Консольный клиент&lt;/font&gt;" vertex="1">
+          <mxGeometry x="395" y="-980" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-traefik" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Traefik&lt;/font&gt;" vertex="1">
+          <mxGeometry x="30" y="-760" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-bff-session" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;HttpOnly cookies → Bearer JWT&lt;br&gt;Обновление сессии на сервере SvelteKit&lt;/font&gt;" vertex="1">
+          <mxGeometry x="-350" y="-1070" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-traefik-paths" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;/api/v1/* → HTTP-сервисы&lt;/font&gt;" vertex="1">
+          <mxGeometry x="350" y="-755" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-browser-bff" parent="1" edge="1" source="extension-browser" target="extension-sveltekit" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="HTTP">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-bff-traefik" parent="1" edge="1" source="extension-sveltekit" target="extension-traefik" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-200" y="-850" />
+              <mxPoint x="180" y="-850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-javafx-traefik" parent="1" edge="1" source="extension-javafx" target="extension-traefik" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="172.5" y="-850" />
+              <mxPoint x="180" y="-850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-console-traefik" parent="1" edge="1" source="extension-console-client" target="extension-traefik" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="517.5" y="-850" />
+              <mxPoint x="180" y="-850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-http-catalog" parent="1" edge="1" source="extension-traefik" target="sTZsLdJ7ANWSkNWKCmPA-7" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-600" />
+              <mxPoint x="92.5" y="-600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-http-content" parent="1" edge="1" source="extension-traefik" target="sTZsLdJ7ANWSkNWKCmPA-9" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-600" />
+              <mxPoint x="245" y="-600" />
+              <mxPoint x="245" y="500" />
+              <mxPoint x="440" y="500" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-http-draft" parent="1" edge="1" source="extension-traefik" target="sTZsLdJ7ANWSkNWKCmPA-10" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-600" />
+              <mxPoint x="772.5" y="-600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-http-recordings" parent="1" edge="1" source="extension-traefik" target="sTZsLdJ7ANWSkNWKCmPA-11" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-600" />
+              <mxPoint x="1412.5" y="-600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-http-auth" parent="1" edge="1" source="extension-traefik" target="sTZsLdJ7ANWSkNWKCmPA-310" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-600" />
+              <mxPoint x="900" y="-600" />
+              <mxPoint x="900" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-api" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Export API&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1820" y="-600" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-cli" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;DatabaseExporter CLI&lt;/font&gt;" vertex="1">
+          <mxGeometry x="2150" y="-600" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-reader" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=25;fillColor=light-dark(#F9F7ED,#382C2E);strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;DatabaseExporter · JDBC&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1985" y="-380" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-xlsx" parent="1" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#cdeb8b;strokeColor=#36393d;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;Excel · XLSX&lt;/font&gt;" vertex="1">
+          <mxGeometry x="2340" y="-385" width="240" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-api-mode" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;database-exporter --server&lt;br&gt;/api/v1/export · XLSX и статистика&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1820" y="-750" width="245" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-cli-mode" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Выгрузка из консоли&lt;/font&gt;" vertex="1">
+          <mxGeometry x="2150" y="-660" width="245" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-readonly" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;JDBC SELECT · readOnly&lt;br&gt;Чтение всех пяти существующих БД&lt;/font&gt;" vertex="1">
+          <mxGeometry x="2250" y="-290" width="300" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-http-export" parent="1" edge="1" source="extension-traefik" target="extension-export-api" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="-660" />
+              <mxPoint x="1942.5" y="-660" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-api-reader" parent="1" edge="1" source="extension-export-api" target="extension-export-reader" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1942.5" y="-460" />
+              <mxPoint x="2107.5" y="-460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-cli-reader" parent="1" edge="1" source="extension-export-cli" target="extension-export-reader" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2272.5" y="-460" />
+              <mxPoint x="2107.5" y="-460" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-reader-xlsx" parent="1" edge="1" source="extension-export-reader" target="extension-export-xlsx" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-export-auth-db" parent="1" edge="1" source="extension-export-reader" target="sTZsLdJ7ANWSkNWKCmPA-319" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=2 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2107.5" y="-220" />
+              <mxPoint x="3000" y="-220" />
+              <mxPoint x="3000" y="1820" />
+              <mxPoint x="-770" y="1820" />
+              <mxPoint x="-770" y="-170" />
+              <mxPoint x="1020" y="-170" />
+              <mxPoint x="1020" y="-80" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-catalog-db" parent="1" edge="1" source="extension-export-reader" target="sTZsLdJ7ANWSkNWKCmPA-108" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=2 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2107.5" y="-220" />
+              <mxPoint x="3000" y="-220" />
+              <mxPoint x="3000" y="1820" />
+              <mxPoint x="-160" y="1820" />
+              <mxPoint x="-160" y="780" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-content-db" parent="1" edge="1" source="extension-export-reader" target="sTZsLdJ7ANWSkNWKCmPA-111" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=2 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2107.5" y="-220" />
+              <mxPoint x="3000" y="-220" />
+              <mxPoint x="3000" y="1820" />
+              <mxPoint x="580" y="1820" />
+              <mxPoint x="580" y="1060" />
+              <mxPoint x="450" y="1060" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-draft-db" parent="1" edge="1" source="extension-export-reader" target="sTZsLdJ7ANWSkNWKCmPA-113" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=2 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2107.5" y="-220" />
+              <mxPoint x="3000" y="-220" />
+              <mxPoint x="3000" y="1820" />
+              <mxPoint x="1196.25" y="1820" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-export-recordings-db" parent="1" edge="1" source="extension-export-reader" target="sTZsLdJ7ANWSkNWKCmPA-115" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=2 4;strokeColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2107.5" y="-220" />
+              <mxPoint x="3000" y="-220" />
+              <mxPoint x="3000" y="570" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-import-formats" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;JSON → Kafka&lt;br&gt;CSV → HTTP preview / apply&lt;/font&gt;" vertex="1">
+          <mxGeometry x="550" y="250" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-import-csv" parent="1" edge="1" source="sTZsLdJ7ANWSkNWKCmPA-4" target="extension-traefik" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;dashed=1;dashPattern=8 4;strokeColor=#666666;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="CSV · preview / apply">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="215" y="200" />
+              <mxPoint x="215" y="-640" />
+              <mxPoint x="-20" y="-640" />
+              <mxPoint x="-20" y="-730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="extension-library-outbox-publish" parent="1" edge="1" source="sTZsLdJ7ANWSkNWKCmPA-7" target="sTZsLdJ7ANWSkNWKCmPA-1" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" value="library_outbox · publish">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-120" y="570" />
+              <mxPoint x="-120" y="330" />
+              <mxPoint x="245" y="330" />
+              <mxPoint x="245" y="395" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="recordings-topic-published" parent="1" style="shape=step;perimeter=stepPerimeter;whiteSpace=wrap;html=1;shapeInside=1;fixedSize=1;fillColor=light-dark(#FFFFFF,#190033);" value="&lt;font style=&quot;font-size: 18px;&quot;&gt;role-recording-published&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="280" x="955" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="recordings-edge-draft-published" edge="1" parent="1" source="sTZsLdJ7ANWSkNWKCmPA-10" target="recordings-topic-published" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" value="publish role">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="recordings-edge-published-recordings" edge="1" parent="1" source="recordings-topic-published" target="sTZsLdJ7ANWSkNWKCmPA-11" style="endArrow=classic;html=1;rounded=0;edgeStyle=orthogonalEdgeStyle;" value="consume">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-db-auth-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;auth_db&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1042.0" y="-110.0" width="108.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-db-catalog-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;catalog_db&lt;/font&gt;" vertex="1">
+          <mxGeometry x="38.25" y="750.0" width="108.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-db-content-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;text_work_&lt;br&gt;content_db&lt;/font&gt;" vertex="1">
+          <mxGeometry x="395.75" y="930.0" width="108.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-db-draft-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;draft_&lt;br&gt;recordings_db&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1142.0" y="1230.0" width="108.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-db-recordings-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;recordings_db&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1862.0" y="540.0" width="108.5" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-minio-name" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;MinIO · teremok-audio&lt;/font&gt;" vertex="1">
+          <mxGeometry x="925" y="930" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-render-modes" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;WAV → concat → MP3&lt;br&gt;SINGLE_FILE / BY_SEGMENTS&lt;/font&gt;" vertex="1">
+          <mxGeometry x="1290" y="975" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-http-legend" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Длинный пунктир — HTTP · короткий пунктир по контуру — JDBC экспорта&lt;br&gt;Топики Kafka и прежние связи БД показаны исходными линиями&lt;/font&gt;" vertex="1">
+          <mxGeometry x="-650" y="-1160" width="740" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="extension-shared-modules" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;HTTP → сервис → репозиторий · http-api: JSON-ошибки и Correlation ID&lt;br&gt;jwt-auth: проверка прав через auth-service · kafka-events · object-storage · backend-client-shared&lt;/font&gt;" vertex="1">
+          <mxGeometry x="370" y="1870" width="1000" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

@@ -29,6 +29,15 @@ public final class TextWorkDeployerApplication {
 
     public static void main(String[] args) {
         try {
+            if (args.length > 0 && ("--csv".equals(args[0]) || "--csv-template".equals(args[0]))) {
+                int status = CsvImporter.run(args);
+                if (status != 0) System.exit(status);
+                return;
+            }
+            if (args.length == 1 && "--help".equals(args[0])) {
+                System.out.println("JSON: [файл.json] либо ввод до строки END\nCSV: --csv файл.csv [--mode NEW|UPSERT] [--check | --yes]\nШаблон: --csv-template шаблон.csv\nCSV использует BACKEND_URL, IMPORT_LOGIN и IMPORT_PASSWORD.");
+                return;
+            }
             String json = readJson(args);
             TextWorkAddedEvent event = JSON.readValue(json, TextWorkAddedEvent.class);
             validate(event);
@@ -38,7 +47,7 @@ public final class TextWorkDeployerApplication {
             System.err.println("Публикация прервана.");
             System.exit(1);
         } catch (Exception exception) {
-            System.err.println("Не удалось опубликовать text-work-added: " + exception.getMessage());
+            System.err.println("Операция не выполнена: " + exception.getMessage());
             System.exit(1);
         }
     }

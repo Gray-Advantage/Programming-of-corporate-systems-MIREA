@@ -1,0 +1,20 @@
+services:
+  web-client:
+    build:
+      context: ./web-client
+    image: teremok-web:local
+    environment:
+      BACKEND_URL: http://traefik:80
+      ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      BODY_SIZE_LIMIT: 105M
+    ports:
+      - "127.0.0.1:5173:3000"
+    depends_on:
+      - traefik
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - edge

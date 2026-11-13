@@ -41,4 +41,6 @@ public interface RecordingRepository {
     List<RenderOutput> findRenderOutputs(UUID renderJobId);
 
     void completeRender(RenderCompletedEvent event, Instant completedAt);
+    List<UUID> findRenderIds(UUID owner, int limit, long offset);
+    long countRenders(UUID owner);
 }

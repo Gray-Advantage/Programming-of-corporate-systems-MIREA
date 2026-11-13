@@ -280,4 +280,13 @@ public class PostgresRecordingRepository implements RecordingRepository {
                 completedAt == null ? null : completedAt.toInstant(),
                 row.getString("error"));
     }
+    @Override
+    public List<UUID> findRenderIds(UUID owner, int limit, long offset) {
+        return jdbcTemplate.query("SELECT id FROM render_job WHERE user_id=? ORDER BY created_at DESC,id LIMIT ? OFFSET ?",
+            (row,n) -> row.getObject(1, UUID.class), owner, limit, offset);
+    }
+    @Override
+    public long countRenders(UUID owner) {
+        return jdbcTemplate.queryForObject("SELECT count(*) FROM render_job WHERE user_id=?", Long.class, owner);
+    }
 }

@@ -14,29 +14,66 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfiguration {
 
-    @Bean
-    Clock clock() {
-        return Clock.systemUTC();
-    }
+  @Bean
+  Clock clock() {
+    return Clock.systemUTC();
+  }
 
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
-        return http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout.disable())
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
-                        (request, response, exception) -> UnauthorizedResponseWriter.write(response)))
-                .authorizeHttpRequests(requests -> requests
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
-    }
+  @Bean
+  SecurityFilterChain securityFilterChain(
+    HttpSecurity http,
+    JwtAuthenticationFilter jwtFilter
+  ) throws Exception {
+    return http
+      .csrf(csrf -> csrf.disable())
+      .sessionManagement(session ->
+        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+      )
+      .logout(logout -> logout.disable())
+      .exceptionHandling(exceptions ->
+        exceptions
+          .accessDeniedHandler((request, response, exception) ->
+            space.grayt.teremok.http.ApiErrors.write(
+              request,
+              response,
+              403,
+              space.grayt.teremok.http.ApiErrors.message(403)
+            )
+          )
+          .authenticationEntryPoint((request, response, exception) ->
+            UnauthorizedResponseWriter.write(request, response)
+          )
+      )
+      .authorizeHttpRequests(requests ->
+        requests
+          .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR)
+          .permitAll()
+          .requestMatchers(
+            HttpMethod.POST,
+            "/api/v1/auth/register",
+            "/api/v1/auth/login"
+          )
+          .permitAll()
+          .requestMatchers(
+            HttpMethod.POST,
+            "/api/v1/session/login",
+            "/api/v1/session/register",
+            "/api/v1/session/refresh"
+          )
+          .permitAll()
+          .requestMatchers("/actuator/health", "/actuator/health/**")
+          .permitAll()
+          .requestMatchers("/api/v1/auth/openapi/**")
+          .hasRole("ADMIN")
+          .anyRequest()
+          .authenticated()
+      )
+      .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+      .build();
+  }
 }

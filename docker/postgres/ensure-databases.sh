@@ -90,15 +90,4 @@ fi
 psql_admin --dbname postgres \
     --command "ALTER DATABASE recordings_db OWNER TO recordings_service"
 
-psql_admin --dbname auth_db --command "SET ROLE auth_service" \
-    --file /database/auth-schema.sql
-psql_admin --dbname catalog_db --command "SET ROLE catalog_service" \
-    --file /database/catalog-schema.sql
-psql_admin --dbname draft_recordings_db --command "SET ROLE draft_recordings_service" \
-    --file /database/draft-recordings-schema.sql
-psql_admin --dbname recordings_db --command "SET ROLE recordings_service" \
-    --file /database/recordings-schema.sql
-psql_admin --dbname text_work_content_db --command "SET ROLE text_work_content_service" \
-    --file /database/text-work-content-schema.sql
-
-echo "Service databases and tables are ready."
+echo "Service databases are ready; each service applies its Flyway migrations."

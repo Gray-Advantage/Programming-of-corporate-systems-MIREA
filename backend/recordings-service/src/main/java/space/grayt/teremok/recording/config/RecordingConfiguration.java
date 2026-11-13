@@ -45,10 +45,11 @@ public class RecordingConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .logout(logout -> logout.disable())
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(
-                        (request, response, exception) -> UnauthorizedResponseWriter.write(response)))
+                .exceptionHandling(exceptions -> exceptions.accessDeniedHandler((request, response, exception) -> space.grayt.teremok.http.ApiErrors.write(request, response, 403, space.grayt.teremok.http.ApiErrors.message(403))).authenticationEntryPoint(
+                        (request, response, exception) -> UnauthorizedResponseWriter.write(request, response)))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.ERROR).permitAll()
+          .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

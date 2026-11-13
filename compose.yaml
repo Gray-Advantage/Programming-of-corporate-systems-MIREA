@@ -159,12 +159,20 @@ services:
       context: .
       dockerfile: backend/auth-service/Dockerfile
     image: teremok-auth-service:local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: jdbc:postgresql://postgres:5432/auth_db
       DATABASE_USERNAME: auth_service
       DATABASE_PASSWORD: auth_service
       JWT_SECRET: local-development-jwt-secret-change-before-production
+      BOOTSTRAP_ADMIN_LOGIN: ${BOOTSTRAP_ADMIN_LOGIN:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       db-init:
@@ -179,6 +187,10 @@ services:
       - traefik.enable=true
       - traefik.docker.network=teremok-backend
       - traefik.http.routers.auth.rule=PathPrefix(`/api/v1/auth`)
+      - traefik.http.routers.session.rule=PathPrefix(`/api/v1/session`) || PathPrefix(`/api/v1/admin/users`)
+      - traefik.http.routers.session.entrypoints=web
+      - traefik.http.routers.session.service=auth
+      - traefik.http.routers.session.middlewares=local-cors@docker
       - traefik.http.routers.auth.entrypoints=web
       - traefik.http.routers.auth.middlewares=local-cors@docker
       - traefik.http.services.auth.loadbalancer.server.port=8080
@@ -190,6 +202,12 @@ services:
       context: .
       dockerfile: backend/catalog-service/Dockerfile
     image: teremok-catalog-service:local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: jdbc:postgresql://postgres:5432/catalog_db
@@ -208,7 +226,7 @@ services:
     labels:
       - traefik.enable=true
       - traefik.docker.network=teremok-backend
-      - traefik.http.routers.catalog.rule=PathPrefix(`/api/v1/catalog`)
+      - traefik.http.routers.catalog.rule=PathPrefix(`/api/v1/catalog`) || PathPrefix(`/api/v1/library`) || PathPrefix(`/swagger-ui`) || PathPrefix(`/v3/api-docs`)
       - traefik.http.routers.catalog.entrypoints=web
       - traefik.http.routers.catalog.middlewares=local-cors@docker
       - traefik.http.services.catalog.loadbalancer.server.port=8080
@@ -220,6 +238,12 @@ services:
       context: .
       dockerfile: backend/draft-recordings-service/Dockerfile
     image: teremok-draft-recordings-service:local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: jdbc:postgresql://postgres:5432/draft_recordings_db
@@ -257,6 +281,12 @@ services:
       context: .
       dockerfile: backend/recordings-service/Dockerfile
     image: teremok-recordings-service:local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: jdbc:postgresql://postgres:5432/recordings_db
@@ -317,6 +347,12 @@ services:
       context: .
       dockerfile: backend/text-work-content-service/Dockerfile
     image: teremok-text-work-content-service:local
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       DATABASE_URL: jdbc:postgresql://postgres:5432/text_work_content_db
@@ -352,6 +388,9 @@ services:
     tty: true
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      BACKEND_URL: http://traefik
+      IMPORT_LOGIN: ${IMPORT_LOGIN:-}
+      IMPORT_PASSWORD: ${IMPORT_PASSWORD:-}
       JAVA_TOOL_OPTIONS: -Dfile.encoding=UTF-8
     depends_on:
       kafka-topics-init:

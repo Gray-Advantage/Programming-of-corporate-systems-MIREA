@@ -1,39 +1,52 @@
 package space.grayt.teremok.auth.web;
 
-import org.springframework.http.HttpStatus;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
-import space.grayt.teremok.auth.service.InvalidCredentialsException;
-import space.grayt.teremok.auth.service.InvalidCredentialsFormatException;
-import space.grayt.teremok.auth.service.LoginAlreadyExistsException;
+import org.springframework.web.bind.annotation.*;
+import space.grayt.teremok.auth.service.*;
+import space.grayt.teremok.http.*;
 
 @RestControllerAdvice
+@Order(0)
 public class AuthExceptionHandler {
 
-    @ExceptionHandler(InvalidCredentialsFormatException.class)
-    public ResponseEntity<ErrorResponse> invalidRequest(InvalidCredentialsFormatException exception) {
-        return ResponseEntity.badRequest().body(new ErrorResponse("invalid_credentials_format", exception.getMessage()));
-    }
+  @ExceptionHandler(InvalidCredentialsFormatException.class)
+  public ResponseEntity<ApiError> invalidRequest(
+    InvalidCredentialsFormatException exception,
+    HttpServletRequest request
+  ) {
+    return ApiErrors.response(
+      request,
+      400,
+      "invalid_credentials_format",
+      exception.getMessage()
+    );
+  }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> unreadableRequest() {
-        return ResponseEntity.badRequest().body(new ErrorResponse("invalid_request", "Request body is invalid"));
-    }
+  @ExceptionHandler(InvalidCredentialsException.class)
+  public ResponseEntity<ApiError> invalidCredentials(
+    InvalidCredentialsException exception,
+    HttpServletRequest request
+  ) {
+    return ApiErrors.response(
+      request,
+      401,
+      "invalid_credentials",
+      exception.getMessage()
+    );
+  }
 
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> invalidCredentials(InvalidCredentialsException exception) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ErrorResponse("invalid_credentials", exception.getMessage()));
-    }
-
-    @ExceptionHandler(LoginAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> loginAlreadyExists(LoginAlreadyExistsException exception) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ErrorResponse("login_already_exists", exception.getMessage()));
-    }
-
-    public record ErrorResponse(String code, String message) {
-    }
+  @ExceptionHandler(LoginAlreadyExistsException.class)
+  public ResponseEntity<ApiError> loginAlreadyExists(
+    LoginAlreadyExistsException exception,
+    HttpServletRequest request
+  ) {
+    return ApiErrors.response(
+      request,
+      409,
+      "login_already_exists",
+      exception.getMessage()
+    );
+  }
 }

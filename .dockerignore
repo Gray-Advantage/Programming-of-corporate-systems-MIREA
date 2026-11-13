@@ -10,3 +10,7 @@ data
 exports
 *.iml
 *.drawio
+**/node_modules
+**/.svelte-kit
+web-client/build
+artifacts

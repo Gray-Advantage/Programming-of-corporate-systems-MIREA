@@ -127,6 +127,15 @@ public class RecordingService {
         return toResponse(job, repository.findRenderOutputs(renderId));
     }
 
+    @Transactional(readOnly = true)
+    public Object history(UUID owner, int page, int size) {
+        int limit=Math.clamp(size, 1, 100), index=Math.max(0, page);
+        var ids=repository.findRenderIds(owner, limit, (long) index*limit);
+        long total=repository.countRenders(owner);
+        return Map.of("content", ids.stream().map(id -> findRender(owner, id)).toList(),
+            "totalElements", total, "totalPages", (total+limit-1)/limit, "number", index);
+    }
+
     private static List<RenderRequestedEvent.SegmentAudioPayload> toSegments(List<RenderFragment> fragments) {
         var bySegment = new LinkedHashMap<UUID, List<RenderFragment>>();
         fragments.stream()

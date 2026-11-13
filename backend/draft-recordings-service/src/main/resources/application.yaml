@@ -7,7 +7,10 @@ spring:
     password: ${DATABASE_PASSWORD:draft_recordings_service}
   sql:
     init:
-      mode: always
+      mode: never
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
   servlet:
     multipart:
       max-file-size: 100MB
@@ -42,3 +45,9 @@ management:
     web:
       exposure:
         include: health
+
+springdoc:
+  api-docs:
+    path: /api/v1/draft-recordings/openapi
+  swagger-ui:
+    enabled: false

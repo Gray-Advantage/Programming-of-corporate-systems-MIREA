@@ -14,3 +14,7 @@ data/
 env/
 ENV/
 exports/*.xlsx
+**/node_modules/
+**/.svelte-kit/
+web-client/.env
+artifacts/

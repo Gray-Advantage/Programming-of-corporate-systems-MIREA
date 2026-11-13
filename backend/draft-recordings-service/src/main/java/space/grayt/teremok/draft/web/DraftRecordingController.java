@@ -24,63 +24,81 @@ import space.grayt.teremok.draft.service.DraftRecordingService;
 @RequestMapping("/api/v1/draft-recordings")
 public class DraftRecordingController {
 
-    private final DraftRecordingService service;
-    private final space.grayt.teremok.storage.ObjectStorage storage;
+  private final DraftRecordingService service;
 
-    public DraftRecordingController(DraftRecordingService service, space.grayt.teremok.storage.ObjectStorage storage) {
-        this.service = service;
-        this.storage = storage;
-    }
+  public DraftRecordingController(DraftRecordingService service) {
+    this.service = service;
+  }
 
-    @GetMapping("/{recordingId}/audio")
-    public ResponseEntity<org.springframework.core.io.InputStreamResource> download(
-            Authentication authentication, @PathVariable UUID recordingId) {
-        var draft = service.ownedDraft(userId(authentication), recordingId);
-        return ResponseEntity.ok()
-                .header("Content-Disposition", org.springframework.http.ContentDisposition.attachment()
-                        .filename(draft.originalFileName(), java.nio.charset.StandardCharsets.UTF_8).build().toString())
-                .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
-                .contentLength(draft.sizeBytes())
-                .body(new org.springframework.core.io.InputStreamResource(storage.open(draft.objectKey())));
-    }
+  @GetMapping("/{recordingId}/audio")
+  public ResponseEntity<org.springframework.core.io.InputStreamResource> download(
+    Authentication authentication,
+    @PathVariable UUID recordingId
+  ) {
+    var draft = service.download(userId(authentication), recordingId);
+    return ResponseEntity.ok()
+      .header(
+        "Content-Disposition",
+        org.springframework.http.ContentDisposition.attachment()
+          .filename(draft.fileName(), java.nio.charset.StandardCharsets.UTF_8)
+          .build()
+          .toString()
+      )
+      .contentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM)
+      .contentLength(draft.sizeBytes())
+      .body(
+        new org.springframework.core.io.InputStreamResource(draft.stream())
+      );
+  }
 
-    @PostMapping("/fragments/{fragmentId}")
-    public ResponseEntity<DraftRecordingResponse> upload(
-            Authentication authentication,
-            @PathVariable UUID fragmentId,
-            @RequestPart("file") MultipartFile file) throws IOException {
-        try (var input = file.getInputStream()) {
-            var result = service.upload(
-                    userId(authentication),
-                    fragmentId,
-                    file.getOriginalFilename(),
-                    file.getContentType(),
-                    file.getSize(),
-                    input);
-            return ResponseEntity.status(HttpStatus.CREATED).body(result);
-        }
+  @PostMapping("/fragments/{fragmentId}")
+  public ResponseEntity<DraftRecordingResponse> upload(
+    Authentication authentication,
+    @PathVariable UUID fragmentId,
+    @RequestPart("file") MultipartFile file
+  ) throws IOException {
+    try (var input = file.getInputStream()) {
+      var result = service.upload(
+        userId(authentication),
+        fragmentId,
+        file.getOriginalFilename(),
+        file.getContentType(),
+        file.getSize(),
+        input
+      );
+      return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
+  }
 
-    @GetMapping("/roles/{roleId}")
-    public RoleDraftsResponse findRoleDrafts(Authentication authentication, @PathVariable UUID roleId) {
-        return service.findRoleDrafts(userId(authentication), roleId);
-    }
+  @GetMapping("/roles/{roleId}")
+  public RoleDraftsResponse findRoleDrafts(
+    Authentication authentication,
+    @PathVariable UUID roleId
+  ) {
+    return service.findRoleDrafts(userId(authentication), roleId);
+  }
 
-    @DeleteMapping("/{recordingId}")
-    public ResponseEntity<Void> delete(Authentication authentication, @PathVariable UUID recordingId) {
-        service.delete(userId(authentication), recordingId);
-        return ResponseEntity.noContent().build();
-    }
+  @DeleteMapping("/{recordingId}")
+  public ResponseEntity<Void> delete(
+    Authentication authentication,
+    @PathVariable UUID recordingId
+  ) {
+    service.delete(userId(authentication), recordingId);
+    return ResponseEntity.noContent().build();
+  }
 
-    @PostMapping("/roles/{roleId}/publish")
-    public ResponseEntity<PublishedRoleRecordingResponse> publish(
-            Authentication authentication,
-            @PathVariable UUID roleId,
-            @RequestBody PublishRoleRecordingRequest request) {
-        return ResponseEntity.accepted().body(service.publish(userId(authentication), roleId, request));
-    }
+  @PostMapping("/roles/{roleId}/publish")
+  public ResponseEntity<PublishedRoleRecordingResponse> publish(
+    Authentication authentication,
+    @PathVariable UUID roleId,
+    @RequestBody PublishRoleRecordingRequest request
+  ) {
+    return ResponseEntity.accepted().body(
+      service.publish(userId(authentication), roleId, request)
+    );
+  }
 
-    private static UUID userId(Authentication authentication) {
-        return (UUID) authentication.getPrincipal();
-    }
+  private static UUID userId(Authentication authentication) {
+    return (UUID) authentication.getPrincipal();
+  }
 }

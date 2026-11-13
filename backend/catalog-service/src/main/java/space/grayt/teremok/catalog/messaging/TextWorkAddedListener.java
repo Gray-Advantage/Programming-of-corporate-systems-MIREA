@@ -11,19 +11,25 @@ import space.grayt.teremok.events.TextWorkAddedEvent;
 @Component
 public class TextWorkAddedListener {
 
-    private static final Logger log = LoggerFactory.getLogger(TextWorkAddedListener.class);
+  private static final Logger log = LoggerFactory.getLogger(
+    TextWorkAddedListener.class
+  );
 
-    private final CatalogTextWorkRepository repository;
+  private final CatalogTextWorkRepository repository;
+  private final space.grayt.teremok.catalog.library.service.LibraryService library;
 
-    public TextWorkAddedListener(CatalogTextWorkRepository repository) {
-        this.repository = repository;
-    }
+  public TextWorkAddedListener(
+    CatalogTextWorkRepository repository,
+    space.grayt.teremok.catalog.library.service.LibraryService library
+  ) {
+    this.repository = repository;
+    this.library = library;
+  }
 
-    @KafkaListener(
-            topics = TextWorkAddedEvent.TOPIC,
-            groupId = "catalog-service")
-    public void onTextWorkAdded(TextWorkAddedEvent event) {
-        repository.save(CatalogTextWork.from(event.textWork()));
-        log.info("Text work {} saved in catalog", event.textWork().id());
-    }
+  @KafkaListener(topics = TextWorkAddedEvent.TOPIC, groupId = "catalog-service")
+  public void onTextWorkAdded(TextWorkAddedEvent event) {
+    repository.save(CatalogTextWork.from(event.textWork()));
+    library.ingest(event);
+    log.info("Text work {} saved in catalog", event.textWork().id());
+  }
 }

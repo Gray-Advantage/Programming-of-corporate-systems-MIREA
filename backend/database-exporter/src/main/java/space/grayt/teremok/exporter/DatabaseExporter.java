@@ -49,6 +49,10 @@ final class DatabaseExporter {
     private static final int MAX_ERROR_LENGTH = 1_000;
 
     ExportReport export(List<DatabaseTarget> targets, Path outputPath) throws IOException {
+        return export(targets, outputPath, table -> true);
+    }
+
+    ExportReport export(List<DatabaseTarget> targets, Path outputPath, java.util.function.Predicate<String> tableAllowed) throws IOException {
         var statuses = new ArrayList<ExportStatus>();
         var sheetNames = new SheetNameGenerator();
 
@@ -57,7 +61,7 @@ final class DatabaseExporter {
             var statusSheet = workbook.createSheet(STATUS_SHEET_NAME);
 
             for (var target : targets) {
-                exportDatabase(workbook, styles, sheetNames, target, statuses);
+                exportDatabase(workbook, styles, sheetNames, target, statuses, tableAllowed);
             }
             writeStatusSheet(statusSheet, styles, statuses);
 
@@ -79,7 +83,8 @@ final class DatabaseExporter {
             WorkbookStyles styles,
             SheetNameGenerator sheetNames,
             DatabaseTarget target,
-            List<ExportStatus> statuses) {
+            List<ExportStatus> statuses,
+            java.util.function.Predicate<String> tableAllowed) {
         try (var connection = DriverManager.getConnection(target.jdbcUrl(), target.username(), target.password())) {
             connection.setReadOnly(true);
             connection.setAutoCommit(false);
@@ -100,11 +105,13 @@ final class DatabaseExporter {
             }
 
             for (var tableName : tables) {
+                if (!tableAllowed.test(tableName)) continue;
                 exportTable(workbook, styles, sheetNames, connection, target, tableName, statuses);
             }
         } catch (SQLException exception) {
             var error = errorMessage(exception);
             for (var tableName : target.expectedTables()) {
+                if (!tableAllowed.test(tableName)) continue;
                 writeFailedTable(workbook, styles, sheetNames, target, tableName, error, statuses);
             }
         }
@@ -185,26 +192,66 @@ final class DatabaseExporter {
                 }
 
                 var rowIndex = 1;
+                var continuationColumns = new java.util.HashMap<Integer, List<Integer>>();
                 while (resultSet.next()) {
                     if (rowIndex > SpreadsheetVersion.EXCEL2007.getLastRowIndex()) {
                         throw new IOException("Table has more rows than one XLSX sheet can contain");
                     }
                     var row = sheet.createRow(rowIndex++);
                     for (var column = 1; column <= columnCount; column++) {
-                        var value = resultSet.getObject(column);
+                        var value = materialize(resultSet.getObject(column));
                         var cell = row.createCell(column - 1);
-                        writeCell(cell, value, styles);
+                        if (value != null && value.toString().length() > MAX_CELL_TEXT_LENGTH) {
+                            var parts = splitText(value.toString());
+                            cell.setCellValue(parts.getFirst());
+                            var extra = continuationColumns.computeIfAbsent(column, ignored -> new ArrayList<>());
+                            for (int part = 1; part < parts.size(); part++) {
+                                if (extra.size() < part) {
+                                    int index = header.getLastCellNum();
+                                    if (index > SpreadsheetVersion.EXCEL2007.getLastColumnIndex()) throw new IOException("Too many continuation columns");
+                                    extra.add(index);
+                                    var extraHeader = header.createCell(index);
+                                    extraHeader.setCellValue(metadata.getColumnLabel(column) + " [" + (part + 1) + "]");
+                                    extraHeader.setCellStyle(styles.header());
+                                    sheet.setColumnWidth(index, MAX_COLUMN_WIDTH_CHARS * 256);
+                                }
+                                row.createCell(extra.get(part - 1)).setCellValue(parts.get(part));
+                            }
+                        } else writeCell(cell, value, styles);
                         maxWidths[column - 1] = Math.max(maxWidths[column - 1], displayLength(value));
                     }
                 }
 
                 if (columnCount > 0) {
-                    sheet.setAutoFilter(new CellRangeAddress(0, Math.max(0, rowIndex - 1), 0, columnCount - 1));
+                    sheet.setAutoFilter(new CellRangeAddress(0, Math.max(0, rowIndex - 1), 0, header.getLastCellNum() - 1));
                 }
                 setColumnWidths(sheet, maxWidths);
                 return rowIndex - 1L;
             }
         }
+    }
+
+    private Object materialize(Object value) throws SQLException {
+        if (value instanceof java.sql.Array array) {
+            try { return arrayToString(array.getArray()); } finally { array.free(); }
+        }
+        if (value instanceof SQLXML xml) {
+            try { return xml.getString(); } finally { xml.free(); }
+        }
+        if (value instanceof Clob clob) return clob.getSubString(1, Math.toIntExact(clob.length()));
+        if (value instanceof Blob blob) return Base64.getEncoder().encodeToString(blob.getBytes(1, Math.toIntExact(blob.length())));
+        if (value instanceof byte[] bytes) return Base64.getEncoder().encodeToString(bytes);
+        return value;
+    }
+
+    static List<String> splitText(String value) {
+        var parts = new ArrayList<String>();
+        for (int start = 0; start < value.length();) {
+            int end = Math.min(start + MAX_CELL_TEXT_LENGTH, value.length());
+            if (end < value.length() && Character.isHighSurrogate(value.charAt(end - 1))) end--;
+            parts.add(value.substring(start, end)); start = end;
+        }
+        return parts;
     }
 
     private List<String> primaryKeyColumns(Connection connection, String tableName) throws SQLException {

@@ -7,9 +7,21 @@ spring:
     password: ${DATABASE_PASSWORD:catalog_service}
   sql:
     init:
-      mode: always
+      mode: never
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        "spring.json.add.type.headers": false
     consumer:
       auto-offset-reset: earliest
       enable-auto-commit: false
@@ -27,3 +39,19 @@ management:
     web:
       exposure:
         include: health
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Библиотека
+        url: /v3/api-docs
+      - name: Авторизация и пользователи
+        url: /api/v1/auth/openapi
+      - name: Черновики записей
+        url: /api/v1/draft-recordings/openapi
+      - name: Публикации и сборки
+        url: /api/v1/recordings/openapi
+      - name: Содержимое произведений
+        url: /api/v1/text-work-content/openapi
+      - name: Статистика и Excel
+        url: /api/v1/export/openapi
